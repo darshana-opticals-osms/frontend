@@ -1,0 +1,7 @@
+.not-found-page {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
