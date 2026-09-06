@@ -27,9 +27,12 @@ src/
   pages/        Route-level page components
   routes/       Route definitions
   services/     API communication layer (kept separate from UI)
-  hooks/        Reusable custom React hooks
-  utils/        Generic helper functions
-  config/       App configuration helpers (e.g. environment variables)
+    hooks/        Reusable custom React hooks
+  utils/        Generic, stateless helper functions (formatting, validation, etc.)
+                - not tied to environment/build configuration
+  config/       Build-time environment variables and app-level configuration
+                (e.g. src/config/env.js) - kept separate from utils/ since it
+                deals with environment-specific values, not generic helpers
   styles/       Global CSS
 tests/          Automated tests (Vitest + React Testing Library)
 ```
