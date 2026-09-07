@@ -5,7 +5,7 @@ import './HomePage.css';
 // Full UI implementation is out of scope for this issue.
 function HomePage() {
   useDocumentTitle('Darshana Opticals | OSMS');
-  
+
   return (
     <section className="home-page">
       <h1>Darshana Opticals</h1>
