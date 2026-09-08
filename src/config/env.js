@@ -5,7 +5,6 @@
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
 
 if (!apiBaseUrl && import.meta.env.DEV) {
-  // eslint-disable-next-line no-console
   console.warn(
     'VITE_API_BASE_URL is not set. Copy .env.example to .env and set a value.',
   );
