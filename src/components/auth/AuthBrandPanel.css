@@ -1,0 +1,120 @@
+.auth-brand-panel {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  background-color: #0f1b4c;
+  color: #ffffff;
+}
+
+.auth-brand-panel__decor {
+  position: absolute;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+}
+
+.auth-brand-panel__decor--top {
+  width: 220px;
+  height: 220px;
+  top: -90px;
+  left: -70px;
+}
+
+.auth-brand-panel__decor--bottom {
+  width: 260px;
+  height: 260px;
+  bottom: -110px;
+  right: -90px;
+}
+
+.auth-brand-panel__content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+}
+
+.auth-brand-panel__logo {
+  display: block;
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 1.25rem;
+  padding: 0.5rem;
+  object-fit: cover;
+  background-color: #ffffff;
+  border-radius: 16px;
+}
+
+.auth-brand-panel__title {
+  margin: 0 0 0.25rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.5rem;
+}
+
+.auth-brand-panel__subtitle {
+  margin: 0 0 2rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.auth-brand-panel__features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.auth-brand-panel__feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  background-color: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+
+.auth-brand-panel__feature-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-top: 0.1rem;
+  color: #ffffff;
+  background-color: #2f5bd9;
+  border-radius: 50%;
+}
+
+.auth-brand-panel__feature-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.auth-brand-panel__feature-primary {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.auth-brand-panel__feature-secondary {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* Decorative marketing panel is hidden on small/medium screens so the
+   form stays full-width and fully usable - see RESPONSIVENESS notes. */
+@media (max-width: 900px) {
+  .auth-brand-panel {
+    display: none;
+  }
+}

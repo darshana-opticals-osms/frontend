@@ -1,0 +1,8 @@
+/* Page-specific tweaks on top of the shared .auth-* classes in
+   src/styles/authShell.css. */
+
+.login-page__success {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #067647;
+}
