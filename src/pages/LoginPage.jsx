@@ -7,6 +7,10 @@ import {
   MailIcon,
   LockIcon,
   ArrowRightIcon,
+  SparkleIcon,
+  EyeIcon,
+  TruckIcon,
+  RefreshIcon,
 } from '../components/forms/FieldIcons';
 import {
   isRequired,
@@ -23,10 +27,10 @@ const initialFormState = {
 
 // Decorative marketing copy for the branding panel - no functionality.
 const LOGIN_FEATURES = [
-  { primary: 'Premium eyewear collection' },
-  { primary: 'Free professional eye tests' },
-  { primary: 'Free delivery island-wide' },
-  { primary: '30-day easy returns' },
+  { primary: 'Premium eyewear collection', icon: SparkleIcon },
+  { primary: 'Free professional eye tests', icon: EyeIcon },
+  { primary: 'Free delivery island-wide', icon: TruckIcon },
+  { primary: '30-day easy returns', icon: RefreshIcon },
 ];
 
 // Validates the login form and returns a map of field -> error message.
@@ -44,6 +48,16 @@ function validateLoginForm(values) {
   }
 
   return errors;
+}
+
+// Static, link-styled "Forgot password?" control. Intentionally not a
+// real link/route: no password reset flow or backend is in scope here.
+function ForgotPasswordLink() {
+  return (
+    <button type="button" className="auth-inline-link">
+      Forgot password?
+    </button>
+  );
 }
 
 // Public login page.
@@ -93,7 +107,7 @@ function LoginPage() {
           <form onSubmit={handleSubmit} noValidate>
             <FormField
               id="email"
-              label="Email"
+              label="Email Address"
               type="email"
               value={values.email}
               onChange={handleChange('email')}
@@ -113,21 +127,17 @@ function LoginPage() {
               placeholder="Enter your password"
               icon={LockIcon}
               revealable
+              labelExtra={<ForgotPasswordLink />}
             />
 
-            <div className="auth-row-between">
-              <label className="auth-checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(event) => setRememberMe(event.target.checked)}
-                />
-                <span>Remember me for 30 days</span>
-              </label>
-              {/* Static text, not a link: no /forgot-password route exists
-                  yet and adding routes is out of scope for this issue. */}
-              <span className="auth-static-link-like">Forgot password?</span>
-            </div>
+            <label className="auth-checkbox-row">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(event) => setRememberMe(event.target.checked)}
+              />
+              <span>Remember me for 30 days</span>
+            </label>
 
             <button type="submit" className="auth-submit-button">
               Sign In

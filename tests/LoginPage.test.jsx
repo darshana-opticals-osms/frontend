@@ -15,7 +15,7 @@ describe('LoginPage', () => {
   it('renders email and password fields', () => {
     renderLoginPage();
 
-    expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /sign in/i }),
@@ -31,6 +31,17 @@ describe('LoginPage', () => {
     );
   });
 
+  it('renders the Forgot password control as a link-styled, non-navigating control', () => {
+    renderLoginPage();
+
+    const forgotPassword = screen.getByRole('button', {
+      name: /forgot password\?/i,
+    });
+    expect(forgotPassword).toBeInTheDocument();
+    // Deliberately not a real link/route - no reset flow in this issue.
+    expect(forgotPassword).not.toHaveAttribute('href');
+  });
+
   it('shows validation errors and blocks submission when required fields are empty', async () => {
     const user = userEvent.setup();
     renderLoginPage();
@@ -40,6 +51,14 @@ describe('LoginPage', () => {
     expect(
       await screen.findAllByText(/this field is required/i),
     ).not.toHaveLength(0);
+    expect(screen.getByLabelText(/email address/i)).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    );
+    expect(screen.getByLabelText(/^password$/i)).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    );
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
@@ -47,7 +66,7 @@ describe('LoginPage', () => {
     const user = userEvent.setup();
     renderLoginPage();
 
-    await user.type(screen.getByLabelText(/^email$/i), 'invalid-email');
+    await user.type(screen.getByLabelText(/email address/i), 'invalid-email');
     await user.type(screen.getByLabelText(/^password$/i), 'somepassword');
     await user.click(screen.getByRole('button', { name: /sign in/i }));
 
@@ -60,7 +79,10 @@ describe('LoginPage', () => {
     const user = userEvent.setup();
     renderLoginPage();
 
-    await user.type(screen.getByLabelText(/^email$/i), 'jane@example.com');
+    await user.type(
+      screen.getByLabelText(/email address/i),
+      'jane@example.com',
+    );
     await user.type(screen.getByLabelText(/^password$/i), 'Password123');
     await user.click(screen.getByRole('button', { name: /sign in/i }));
 

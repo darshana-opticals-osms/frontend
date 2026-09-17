@@ -85,3 +85,33 @@ export function CheckIcon(props) {
     </svg>
   );
 }
+
+export function SparkleIcon(props) {
+  return (
+    <svg {...baseProps({ strokeWidth: 1.6, width: 12, height: 12, ...props })}>
+      <path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18" />
+    </svg>
+  );
+}
+
+export function TruckIcon(props) {
+  return (
+    <svg {...baseProps({ strokeWidth: 1.6, width: 12, height: 12, ...props })}>
+      <rect x="2" y="7" width="12" height="9" rx="1" />
+      <path d="M14 10h4l3 3v3h-7z" />
+      <circle cx="7" cy="18" r="1.6" />
+      <circle cx="17" cy="18" r="1.6" />
+    </svg>
+  );
+}
+
+export function RefreshIcon(props) {
+  return (
+    <svg {...baseProps({ strokeWidth: 1.8, width: 12, height: 12, ...props })}>
+      <path d="M3 12a9 9 0 0 1 15.3-6.4L21 8" />
+      <path d="M21 4v4h-4" />
+      <path d="M21 12a9 9 0 0 1-15.3 6.4L3 16" />
+      <path d="M3 20v-4h4" />
+    </svg>
+  );
+}

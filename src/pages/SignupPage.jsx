@@ -21,12 +21,17 @@ import {
 import '../styles/authShell.css';
 import './SignupPage.css';
 
+const AGREEMENT_ERROR_MESSAGE =
+  'You must agree to the Terms of Service and Privacy Policy to continue.';
+
 const initialFormState = {
-  fullName: '',
+  firstName: '',
+  lastName: '',
   email: '',
   phone: '',
   password: '',
   confirmPassword: '',
+  agreedToTerms: false,
 };
 
 // Decorative marketing copy for the branding panel - no functionality.
@@ -45,8 +50,12 @@ const SIGNUP_FEATURES = [
 function validateSignupForm(values) {
   const errors = {};
 
-  if (!isRequired(values.fullName)) {
-    errors.fullName = validationMessages.required;
+  if (!isRequired(values.firstName)) {
+    errors.firstName = validationMessages.required;
+  }
+
+  if (!isRequired(values.lastName)) {
+    errors.lastName = validationMessages.required;
   }
 
   if (!isRequired(values.email)) {
@@ -73,6 +82,10 @@ function validateSignupForm(values) {
     errors.confirmPassword = validationMessages.passwordMismatch;
   }
 
+  if (!values.agreedToTerms) {
+    errors.agreedToTerms = AGREEMENT_ERROR_MESSAGE;
+  }
+
   return errors;
 }
 
@@ -85,13 +98,18 @@ function SignupPage() {
   const [values, setValues] = useState(initialFormState);
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
-  // Visual-only: not required, not validated, not persisted anywhere.
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   function handleChange(field) {
     return (event) => {
       setValues((previous) => ({ ...previous, [field]: event.target.value }));
     };
+  }
+
+  function handleAgreementChange(event) {
+    setValues((previous) => ({
+      ...previous,
+      agreedToTerms: event.target.checked,
+    }));
   }
 
   function handleSubmit(event) {
@@ -115,23 +133,34 @@ function SignupPage() {
         <div className="auth-card">
           <div className="auth-card__header">
             <h1>Create account</h1>
-            <p>Join Darshana Opticals today â€” it&apos;s free</p>
+            <p>Join Darshana Opticals today {'\u2014'} it&apos;s free</p>
           </div>
 
           <form onSubmit={handleSubmit} noValidate>
-            <FormField
-              id="fullName"
-              label="Full Name"
-              value={values.fullName}
-              onChange={handleChange('fullName')}
-              error={errors.fullName}
-              autoComplete="name"
-              placeholder="Your full name"
-              icon={UserIcon}
-            />
+            <div className="auth-field-pair">
+              <FormField
+                id="firstName"
+                label="First Name"
+                value={values.firstName}
+                onChange={handleChange('firstName')}
+                error={errors.firstName}
+                autoComplete="given-name"
+                placeholder="Mahendra"
+                icon={UserIcon}
+              />
+              <FormField
+                id="lastName"
+                label="Last Name"
+                value={values.lastName}
+                onChange={handleChange('lastName')}
+                error={errors.lastName}
+                autoComplete="family-name"
+                placeholder="Perera"
+              />
+            </div>
             <FormField
               id="email"
-              label="Email"
+              label="Email Address"
               type="email"
               value={values.email}
               onChange={handleChange('email')}
@@ -178,14 +207,48 @@ function SignupPage() {
               revealLabel="confirmation"
             />
 
-            <label className="auth-checkbox-row">
-              <input
-                type="checkbox"
-                checked={agreedToTerms}
-                onChange={(event) => setAgreedToTerms(event.target.checked)}
-              />
-              <span>I agree to the Terms of Service and Privacy Policy</span>
-            </label>
+            <div className="auth-checkbox-group">
+              <div className="auth-checkbox-row">
+                <input
+                  id="agreedToTerms"
+                  type="checkbox"
+                  checked={values.agreedToTerms}
+                  onChange={handleAgreementChange}
+                  aria-label="I agree to the Terms of Service and Privacy Policy"
+                  aria-invalid={Boolean(errors.agreedToTerms)}
+                  aria-describedby={
+                    errors.agreedToTerms ? 'agreedToTerms-error' : undefined
+                  }
+                />
+                <label htmlFor="agreedToTerms">
+                  I agree to the{' '}
+                  <a
+                    href="#terms-of-service"
+                    className="auth-inline-link"
+                    onClick={(event) => event.preventDefault()}
+                  >
+                    Terms of Service
+                  </a>
+                  ...
+                  <a
+                    href="#privacy-policy"
+                    className="auth-inline-link"
+                    onClick={(event) => event.preventDefault()}
+                  >
+                    Privacy Policy
+                  </a>
+                </label>
+              </div>
+              {errors.agreedToTerms ? (
+                <p
+                  id="agreedToTerms-error"
+                  className="auth-error-text"
+                  role="alert"
+                >
+                  {errors.agreedToTerms}
+                </p>
+              ) : null}
+            </div>
 
             <button type="submit" className="auth-submit-button">
               Create Account
@@ -211,7 +274,10 @@ function SignupPage() {
         </p>
       </div>
 
-      <AuthBrandPanel features={SIGNUP_FEATURES} />
+      <AuthBrandPanel
+        features={SIGNUP_FEATURES}
+        sectionHeading="Why Join Us?"
+      />
     </div>
   );
 }

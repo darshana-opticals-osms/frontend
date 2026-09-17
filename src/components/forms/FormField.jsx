@@ -6,12 +6,18 @@ import './FormField.css';
 // Centralises the label/input/error wiring (aria-invalid,
 // aria-describedby) so form pages don't have to repeat it per field.
 //
-// Optional extras (both purely presentational, neither changes the
-// field's validation behaviour):
+// Optional extras (all purely presentational, none change the field's
+// validation behaviour):
 //   - `icon`: a leading icon component rendered inside the input.
 //   - `revealable`: when true on a password field, adds a show/hide
 //     toggle button. The field still renders as type="password" (i.e.
 //     masked) by default; toggling only changes local, in-memory state.
+//   - `requiredMarker`: shows a visible "*" next to the label. Defaults
+//     to the `required` prop, but can be overridden independently so a
+//     field can stay functionally required without a visual marker (or
+//     vice versa) to match an approved design exactly.
+//   - `labelExtra`: an optional node rendered at the right-hand end of
+//     the label row (e.g. a "Forgot password?" link next to "Password").
 function FormField({
   id,
   label,
@@ -21,6 +27,8 @@ function FormField({
   error,
   autoComplete,
   required = true,
+  requiredMarker = required,
+  labelExtra,
   placeholder,
   icon: Icon,
   revealable = false,
@@ -42,9 +50,21 @@ function FormField({
 
   return (
     <div className="form-field">
-      <label htmlFor={id} className="form-field__label">
-        {label}
-      </label>
+      <div className="form-field__label-row">
+        <span className="form-field__label-group">
+          <label htmlFor={id} className="form-field__label">
+            {label}
+          </label>
+          {requiredMarker ? (
+            <span className="form-field__required" aria-hidden="true">
+              *
+            </span>
+          ) : null}
+        </span>
+        {labelExtra ? (
+          <span className="form-field__label-extra">{labelExtra}</span>
+        ) : null}
+      </div>
       <div className="form-field__control">
         {Icon ? (
           <span className="form-field__icon" aria-hidden="true">

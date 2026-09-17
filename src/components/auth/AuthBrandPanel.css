@@ -63,6 +63,15 @@
   color: rgba(255, 255, 255, 0.7);
 }
 
+.auth-brand-panel__section-heading {
+  margin: 0 0 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
 .auth-brand-panel__features {
   display: flex;
   flex-direction: column;

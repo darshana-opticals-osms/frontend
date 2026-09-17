@@ -11,15 +11,30 @@ function renderSignupPage() {
   );
 }
 
+async function fillValidFormExceptAgreement(user) {
+  await user.type(screen.getByLabelText(/^first name$/i), 'Jane');
+  await user.type(screen.getByLabelText(/^last name$/i), 'Doe');
+  await user.type(screen.getByLabelText(/email address/i), 'jane@example.com');
+  await user.type(screen.getByLabelText(/phone number/i), '0771234567');
+  await user.type(screen.getByLabelText(/^password$/i), 'Password123');
+  await user.type(screen.getByLabelText(/confirm password/i), 'Password123');
+}
+
 describe('SignupPage', () => {
   it('renders all required registration fields', () => {
     renderSignupPage();
 
-    expect(screen.getByLabelText(/full name/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^first name$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^last name$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/phone number/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/confirm password/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('checkbox', {
+        name: /i agree to the terms of service and privacy policy/i,
+      }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /create account/i }),
     ).toBeInTheDocument();
@@ -47,6 +62,14 @@ describe('SignupPage', () => {
     expect(
       await screen.findAllByText(/this field is required/i),
     ).not.toHaveLength(0);
+    expect(screen.getByLabelText(/^first name$/i)).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    );
+    expect(screen.getByLabelText(/^last name$/i)).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    );
     expect(
       screen.queryByRole('status', { name: /form is valid/i }),
     ).not.toBeInTheDocument();
@@ -56,7 +79,7 @@ describe('SignupPage', () => {
     const user = userEvent.setup();
     renderSignupPage();
 
-    await user.type(screen.getByLabelText(/^email$/i), 'not-an-email');
+    await user.type(screen.getByLabelText(/email address/i), 'not-an-email');
     await user.click(screen.getByRole('button', { name: /create account/i }));
 
     expect(
@@ -68,8 +91,12 @@ describe('SignupPage', () => {
     const user = userEvent.setup();
     renderSignupPage();
 
-    await user.type(screen.getByLabelText(/full name/i), 'Jane Doe');
-    await user.type(screen.getByLabelText(/^email$/i), 'jane@example.com');
+    await user.type(screen.getByLabelText(/^first name$/i), 'Jane');
+    await user.type(screen.getByLabelText(/^last name$/i), 'Doe');
+    await user.type(
+      screen.getByLabelText(/email address/i),
+      'jane@example.com',
+    );
     await user.type(screen.getByLabelText(/phone number/i), '0771234567');
     await user.type(screen.getByLabelText(/^password$/i), 'Password123');
     await user.type(
@@ -83,15 +110,52 @@ describe('SignupPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('accepts a fully valid form and does not display field errors', async () => {
+  it('requires the Terms of Service / Privacy Policy agreement before submitting', async () => {
     const user = userEvent.setup();
     renderSignupPage();
 
-    await user.type(screen.getByLabelText(/full name/i), 'Jane Doe');
-    await user.type(screen.getByLabelText(/^email$/i), 'jane@example.com');
-    await user.type(screen.getByLabelText(/phone number/i), '0771234567');
-    await user.type(screen.getByLabelText(/^password$/i), 'Password123');
-    await user.type(screen.getByLabelText(/confirm password/i), 'Password123');
+    await fillValidFormExceptAgreement(user);
+    // Deliberately leave the agreement checkbox unchecked.
+    await user.click(screen.getByRole('button', { name: /create account/i }));
+
+    const agreementError = await screen.findByText(
+      /you must agree to the terms of service and privacy policy/i,
+    );
+    expect(agreementError).toBeInTheDocument();
+
+    const checkbox = screen.getByRole('checkbox', {
+      name: /i agree to the terms of service and privacy policy/i,
+    });
+    expect(checkbox).toHaveAttribute('aria-invalid', 'true');
+    expect(checkbox).toHaveAccessibleDescription(
+      /you must agree to the terms of service and privacy policy/i,
+    );
+    expect(
+      screen.queryByRole('status', { name: /form is valid/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('renders the Terms of Service and Privacy Policy as link-styled controls', () => {
+    renderSignupPage();
+
+    expect(
+      screen.getByRole('link', { name: /^terms of service$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /^privacy policy$/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('accepts a fully valid form (including agreement) and does not display field errors', async () => {
+    const user = userEvent.setup();
+    renderSignupPage();
+
+    await fillValidFormExceptAgreement(user);
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: /i agree to the terms of service and privacy policy/i,
+      }),
+    );
     await user.click(screen.getByRole('button', { name: /create account/i }));
 
     expect(await screen.findByRole('status')).toHaveTextContent(
@@ -100,5 +164,6 @@ describe('SignupPage', () => {
     expect(
       screen.queryByText(/this field is required/i),
     ).not.toBeInTheDocument();
+    expect(screen.queryByText(/you must agree/i)).not.toBeInTheDocument();
   });
 });

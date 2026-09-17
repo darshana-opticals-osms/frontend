@@ -6,12 +6,36 @@
   text-align: left;
 }
 
+.form-field__label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
 .form-field__label {
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--color-muted);
+}
+
+.form-field__label-group {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.2rem;
+}
+
+.form-field__required {
+  color: #d92d20;
+}
+
+.form-field__label-extra {
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .form-field__control {
