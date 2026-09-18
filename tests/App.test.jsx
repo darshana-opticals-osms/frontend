@@ -36,4 +36,20 @@ describe('Routing', () => {
       screen.getByRole('heading', { name: /page not found/i }),
     ).toBeInTheDocument();
   });
+
+  it('renders the SignupPage on the "/signup" route', () => {
+    renderAppAt('/signup');
+
+    expect(
+      screen.getByRole('heading', { name: /create account/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('renders the LoginPage on the "/login" route', () => {
+    renderAppAt('/login');
+
+    expect(
+      screen.getByRole('heading', { name: /welcome back/i }),
+    ).toBeInTheDocument();
+  });
 });

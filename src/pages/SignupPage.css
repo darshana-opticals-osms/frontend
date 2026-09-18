@@ -1,0 +1,20 @@
+/* Page-specific tweaks on top of the shared .auth-* classes in
+   src/styles/authShell.css. */
+
+.auth-field-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1rem;
+}
+
+@media (max-width: 480px) {
+  .auth-field-pair {
+    grid-template-columns: 1fr;
+  }
+}
+
+.signup-page__success {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #067647;
+}
