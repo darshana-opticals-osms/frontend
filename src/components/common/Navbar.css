@@ -22,6 +22,19 @@
   color: var(--color-muted);
 }
 
+.navbar__logout-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.navbar__logout-button:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 480px) {
   .navbar {
     flex-direction: column;
