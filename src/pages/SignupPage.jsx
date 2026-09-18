@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import useDocumentTitle from '../hooks/useDocumentTitle';
+import useAuth from '../hooks/useAuth';
 import FormField from '../components/forms/FormField';
 import AuthBrandPanel from '../components/auth/AuthBrandPanel';
 import {
@@ -90,18 +91,26 @@ function validateSignupForm(values) {
 }
 
 // Public customer registration page.
-// Client-side validation only - backend integration and credential
-// storage are out of scope for this issue (see DDP-012).
+// Valid form data is sent through the centralized authentication service.
 function SignupPage() {
   useDocumentTitle('Sign Up | Darshana Opticals');
 
+  const { register, isLoading } = useAuth();
+
   const [values, setValues] = useState(initialFormState);
   const [errors, setErrors] = useState({});
-  const [submitted, setSubmitted] = useState(false);
+  const [apiError, setApiError] = useState('');
+  const [registrationSucceeded, setRegistrationSucceeded] = useState(false);
 
   function handleChange(field) {
     return (event) => {
-      setValues((previous) => ({ ...previous, [field]: event.target.value }));
+      setValues((previous) => ({
+        ...previous,
+        [field]: event.target.value,
+      }));
+
+      setApiError('');
+      setRegistrationSucceeded(false);
     };
   }
 
@@ -110,21 +119,50 @@ function SignupPage() {
       ...previous,
       agreedToTerms: event.target.checked,
     }));
+
+    setApiError('');
+    setRegistrationSucceeded(false);
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
-    const validationErrors = validateSignupForm(values);
-    setErrors(validationErrors);
 
-    if (Object.keys(validationErrors).length > 0) {
-      setSubmitted(false);
+    if (isLoading) {
       return;
     }
 
-    // Form is valid. Backend/API integration is intentionally not
-    // implemented here - this issue covers UI and validation only.
-    setSubmitted(true);
+    const validationErrors = validateSignupForm(values);
+    setErrors(validationErrors);
+    setApiError('');
+    setRegistrationSucceeded(false);
+
+    if (Object.keys(validationErrors).length > 0) {
+      return;
+    }
+
+    try {
+      await register({
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email,
+        phone: values.phone,
+        password: values.password,
+      });
+
+      setRegistrationSucceeded(true);
+
+      // Clear passwords after successful registration so credentials do not
+      // remain unnecessarily in the form after the request completes.
+      setValues((previous) => ({
+        ...previous,
+        password: '',
+        confirmPassword: '',
+      }));
+    } catch (error) {
+      setApiError(
+        error.message || 'Unable to create your account. Please try again.',
+      );
+    }
   }
 
   return (
@@ -136,7 +174,7 @@ function SignupPage() {
             <p>Join Darshana Opticals today {'\u2014'} it&apos;s free</p>
           </div>
 
-          <form onSubmit={handleSubmit} noValidate>
+          <form onSubmit={handleSubmit} noValidate aria-busy={isLoading}>
             <div className="auth-field-pair">
               <FormField
                 id="firstName"
@@ -148,6 +186,7 @@ function SignupPage() {
                 placeholder="Mahendra"
                 icon={UserIcon}
               />
+
               <FormField
                 id="lastName"
                 label="Last Name"
@@ -158,6 +197,7 @@ function SignupPage() {
                 placeholder="Perera"
               />
             </div>
+
             <FormField
               id="email"
               label="Email Address"
@@ -169,6 +209,7 @@ function SignupPage() {
               placeholder="you@example.com"
               icon={MailIcon}
             />
+
             <FormField
               id="phone"
               label="Phone Number"
@@ -180,6 +221,7 @@ function SignupPage() {
               placeholder="+94 77 123 4567"
               icon={PhoneIcon}
             />
+
             <FormField
               id="password"
               label="Password"
@@ -193,6 +235,7 @@ function SignupPage() {
               revealable
               revealLabel="password"
             />
+
             <FormField
               id="confirmPassword"
               label="Confirm Password"
@@ -220,6 +263,7 @@ function SignupPage() {
                     errors.agreedToTerms ? 'agreedToTerms-error' : undefined
                   }
                 />
+
                 <label htmlFor="agreedToTerms">
                   I agree to the{' '}
                   <a
@@ -239,6 +283,7 @@ function SignupPage() {
                   </a>
                 </label>
               </div>
+
               {errors.agreedToTerms ? (
                 <p
                   id="agreedToTerms-error"
@@ -250,15 +295,24 @@ function SignupPage() {
               ) : null}
             </div>
 
-            <button type="submit" className="auth-submit-button">
-              Create Account
-              <ArrowRightIcon />
+            <button
+              type="submit"
+              className="auth-submit-button"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Creating Account...' : 'Create Account'}
+              {!isLoading ? <ArrowRightIcon /> : null}
             </button>
 
-            {submitted ? (
+            {apiError ? (
+              <p role="alert" className="auth-error-text">
+                {apiError}
+              </p>
+            ) : null}
+
+            {registrationSucceeded ? (
               <p role="status" className="signup-page__success">
-                Form is valid. Account creation will be connected to the backend
-                in a future update.
+                Account created successfully. You can now sign in.
               </p>
             ) : null}
           </form>
