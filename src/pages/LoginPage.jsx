@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import useDocumentTitle from '../hooks/useDocumentTitle';
+import useAuth from '../hooks/useAuth';
 import FormField from '../components/forms/FormField';
 import AuthBrandPanel from '../components/auth/AuthBrandPanel';
 import {
@@ -50,8 +51,8 @@ function validateLoginForm(values) {
   return errors;
 }
 
-// Static, link-styled "Forgot password?" control. Intentionally not a
-// real link/route: no password reset flow or backend is in scope here.
+// Static, link-styled "Forgot password?" control.
+// No password reset flow is currently part of this issue.
 function ForgotPasswordLink() {
   return (
     <button type="button" className="auth-inline-link">
@@ -61,36 +62,61 @@ function ForgotPasswordLink() {
 }
 
 // Public login page.
-// Client-side validation only - authentication, JWT handling, and any
-// persistent storage of credentials/tokens are out of scope (see DDP-012).
+// Valid credentials are sent through the centralized authentication service.
 function LoginPage() {
   useDocumentTitle('Log In | Darshana Opticals');
 
+  const { login, isLoading } = useAuth();
+
   const [values, setValues] = useState(initialFormState);
   const [errors, setErrors] = useState({});
-  const [submitted, setSubmitted] = useState(false);
-  // Visual-only: not persisted anywhere (no localStorage/sessionStorage).
-  const [rememberMe, setRememberMe] = useState(false);
+  const [apiError, setApiError] = useState('');
+  const [loginSucceeded, setLoginSucceeded] = useState(false);
 
   function handleChange(field) {
     return (event) => {
-      setValues((previous) => ({ ...previous, [field]: event.target.value }));
+      setValues((previous) => ({
+        ...previous,
+        [field]: event.target.value,
+      }));
+
+      setApiError('');
+      setLoginSucceeded(false);
     };
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
-    const validationErrors = validateLoginForm(values);
-    setErrors(validationErrors);
 
-    if (Object.keys(validationErrors).length > 0) {
-      setSubmitted(false);
+    if (isLoading) {
       return;
     }
 
-    // Form is valid. Backend/API integration is intentionally not
-    // implemented here - this issue covers UI and validation only.
-    setSubmitted(true);
+    const validationErrors = validateLoginForm(values);
+
+    setErrors(validationErrors);
+    setApiError('');
+    setLoginSucceeded(false);
+
+    if (Object.keys(validationErrors).length > 0) {
+      return;
+    }
+
+    try {
+      await login({
+        email: values.email,
+        password: values.password,
+      });
+
+      setLoginSucceeded(true);
+
+      setValues((previous) => ({
+        ...previous,
+        password: '',
+      }));
+    } catch (error) {
+      setApiError(error.message || 'Unable to sign in. Please try again.');
+    }
   }
 
   return (
@@ -104,7 +130,7 @@ function LoginPage() {
             <p>Sign in to your account to continue</p>
           </div>
 
-          <form onSubmit={handleSubmit} noValidate>
+          <form onSubmit={handleSubmit} noValidate aria-busy={isLoading}>
             <FormField
               id="email"
               label="Email Address"
@@ -116,6 +142,7 @@ function LoginPage() {
               placeholder="you@example.com"
               icon={MailIcon}
             />
+
             <FormField
               id="password"
               label="Password"
@@ -130,24 +157,24 @@ function LoginPage() {
               labelExtra={<ForgotPasswordLink />}
             />
 
-            <label className="auth-checkbox-row">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(event) => setRememberMe(event.target.checked)}
-              />
-              <span>Remember me for 30 days</span>
-            </label>
-
-            <button type="submit" className="auth-submit-button">
-              Sign In
-              <ArrowRightIcon />
+            <button
+              type="submit"
+              className="auth-submit-button"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Signing In...' : 'Sign In'}
+              {!isLoading ? <ArrowRightIcon /> : null}
             </button>
 
-            {submitted ? (
+            {apiError ? (
+              <p role="alert" className="auth-error-text">
+                {apiError}
+              </p>
+            ) : null}
+
+            {loginSucceeded ? (
               <p role="status" className="login-page__success">
-                Form is valid. Authentication will be connected to the backend
-                in a future update.
+                Signed in successfully.
               </p>
             ) : null}
           </form>
