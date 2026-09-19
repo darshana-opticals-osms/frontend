@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import ProductsPage from '../src/pages/ProductsPage';
@@ -35,6 +35,7 @@ describe('ProductsPage', () => {
     renderCatalog('/products?category=Men');
 
     expect(screen.getByRole('heading', { name: 'Men' })).toBeInTheDocument();
+    expect(document.title).toBe('Men | Darshana Opticals');
     expect(screen.getByRole('radio', { name: 'Men' })).toBeChecked();
     expect(await screen.findByText('Austen Classic')).toBeInTheDocument();
     expect(screen.queryByText('Meridian Slim')).not.toBeInTheDocument();
@@ -51,6 +52,7 @@ describe('ProductsPage', () => {
         '/products?category=Women',
       );
     });
+    expect(document.title).toBe('Women | Darshana Opticals');
     expect(await screen.findByText('Meridian Slim')).toBeInTheDocument();
   });
 
@@ -68,6 +70,26 @@ describe('ProductsPage', () => {
     expect(await screen.findByText('Austen Classic')).toBeInTheDocument();
     expect(screen.getByText('Meridian Slim')).toBeInTheDocument();
     expect(screen.queryByText('Blue Shield')).not.toBeInTheDocument();
+  });
+
+  it('commits the price slider to the URL only after the interaction finishes', async () => {
+    renderCatalog();
+
+    await screen.findByText('Austen Classic');
+    const slider = screen.getByRole('slider', { name: /maximum price/i });
+
+    fireEvent.change(slider, { target: { value: '13000' } });
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/products');
+    expect(screen.getByTestId('location')).not.toHaveTextContent('maxPrice=');
+
+    fireEvent.pointerUp(slider);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('location')).toHaveTextContent(
+        '/products?maxPrice=13000',
+      );
+    });
   });
 
   it('supports search from the query string', async () => {

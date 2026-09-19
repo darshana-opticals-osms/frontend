@@ -1,6 +1,44 @@
+import { useEffect, useRef, useState } from 'react';
 import './FilterPanel.css';
 
 function FilterPanel({ filters, options, onFilterChange, onClear }) {
+  const resolvedMaxPrice = filters.maxPrice ?? options.maxPrice;
+  const [draftMaxPrice, setDraftMaxPrice] = useState(resolvedMaxPrice);
+  const lastCommittedPrice = useRef(resolvedMaxPrice);
+
+  useEffect(() => {
+    const nextValue = filters.maxPrice ?? options.maxPrice;
+    setDraftMaxPrice(nextValue);
+    lastCommittedPrice.current = nextValue;
+  }, [filters.maxPrice, options.maxPrice]);
+
+  const commitMaxPrice = (value) => {
+    const numericValue = Number(value);
+
+    if (!Number.isFinite(numericValue)) {
+      return;
+    }
+
+    if (numericValue === lastCommittedPrice.current) {
+      return;
+    }
+
+    lastCommittedPrice.current = numericValue;
+
+    if (numericValue >= options.maxPrice) {
+      onFilterChange('maxPrice', '');
+      return;
+    }
+
+    onFilterChange('maxPrice', numericValue);
+  };
+
+  const resetPrice = () => {
+    setDraftMaxPrice(options.maxPrice);
+    lastCommittedPrice.current = options.maxPrice;
+    onFilterChange('maxPrice', '');
+  };
+
   return (
     <aside className="filter-panel" aria-label="Product filters">
       <div className="filter-panel__header">
@@ -65,11 +103,7 @@ function FilterPanel({ filters, options, onFilterChange, onClear }) {
       <div className="filter-panel__price">
         <label htmlFor="max-price">
           Maximum price
-          <span>
-            {filters.maxPrice === null
-              ? `Up to Rs.${options.maxPrice.toLocaleString('en-US')}`
-              : `Up to Rs.${filters.maxPrice.toLocaleString('en-US')}`}
-          </span>
+          <span>Up to Rs.{draftMaxPrice.toLocaleString('en-US')}</span>
         </label>
         <input
           id="max-price"
@@ -77,15 +111,16 @@ function FilterPanel({ filters, options, onFilterChange, onClear }) {
           min={options.minPrice}
           max={options.maxPrice}
           step="500"
-          value={filters.maxPrice ?? options.maxPrice}
-          onChange={(event) =>
-            onFilterChange('maxPrice', Number(event.target.value))
-          }
+          value={draftMaxPrice}
+          onChange={(event) => setDraftMaxPrice(Number(event.target.value))}
+          onPointerUp={(event) => commitMaxPrice(event.currentTarget.value)}
+          onKeyUp={(event) => commitMaxPrice(event.currentTarget.value)}
+          onBlur={(event) => commitMaxPrice(event.currentTarget.value)}
         />
         <button
           className="filter-panel__price-reset"
           type="button"
-          onClick={() => onFilterChange('maxPrice', '')}
+          onClick={resetPrice}
         >
           Reset price
         </button>

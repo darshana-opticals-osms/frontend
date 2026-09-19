@@ -30,25 +30,34 @@ describe('ProductCard', () => {
     expect(screen.getByText('Test Frame')).toBeInTheDocument();
     expect(screen.getByText('Test Brand')).toBeInTheDocument();
     expect(screen.getByText('Rs.12,500')).toBeInTheDocument();
+    expect(screen.getByText('Men | Full Rim')).toBeInTheDocument();
     expect(
       screen.getByAltText('Black rectangular test frame'),
     ).toBeInTheDocument();
   });
 
-  it('links to the product detail route', () => {
+  it('uses one product-detail link for the entire card', () => {
     renderCard();
 
+    const links = screen.getAllByRole('link');
+
+    expect(links).toHaveLength(1);
     expect(
       screen.getByRole('link', { name: 'View Test Frame' }),
     ).toHaveAttribute('href', '/products/test-frame');
   });
 
-  it('is keyboard accessible', async () => {
+  it('has a single keyboard focus stop for product navigation', async () => {
     const user = userEvent.setup();
     renderCard();
 
     await user.tab();
 
     expect(screen.getByRole('link', { name: 'View Test Frame' })).toHaveFocus();
+
+    await user.tab();
+    expect(
+      screen.getByRole('link', { name: 'View Test Frame' }),
+    ).not.toHaveFocus();
   });
 });

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import ProductCard from '../components/products/ProductCard';
 import FilterPanel from '../components/products/FilterPanel';
 import EmptyState from '../components/products/EmptyState';
@@ -18,6 +19,15 @@ function ProductsPage() {
 
   const title =
     filters.category || (filters.search ? 'Search results' : 'Eyewear');
+
+  useEffect(() => {
+    const previousTitle = document.title;
+    document.title = `${title} | Darshana Opticals`;
+
+    return () => {
+      document.title = previousTitle;
+    };
+  }, [title]);
 
   return (
     <section className="catalog-page">

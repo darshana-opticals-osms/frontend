@@ -26,6 +26,22 @@ function ProductDetailPage() {
     };
   }, [id]);
 
+  useEffect(() => {
+    const previousTitle = document.title;
+
+    if (loading) {
+      document.title = 'Product | Darshana Opticals';
+    } else if (product) {
+      document.title = `${product.name} | Darshana Opticals`;
+    } else {
+      document.title = 'Product Not Found | Darshana Opticals';
+    }
+
+    return () => {
+      document.title = previousTitle;
+    };
+  }, [loading, product]);
+
   if (loading) {
     return (
       <section className="product-detail">
@@ -71,8 +87,6 @@ function ProductDetailPage() {
               <span>{formatCurrency(product.originalPrice)}</span>
             ) : null}
           </div>
-
-          <p className="product-detail__description">{product.description}</p>
 
           <dl className="product-detail__specs">
             <div>

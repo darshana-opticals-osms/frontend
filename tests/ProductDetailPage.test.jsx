@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import ProductDetailPage from '../src/pages/ProductDetailPage';
 
@@ -13,7 +13,7 @@ function renderDetail(path) {
 }
 
 describe('ProductDetailPage', () => {
-  it('renders the selected product details', async () => {
+  it('renders the selected product details without duplicated description text', async () => {
     renderDetail('/products/austen-classic');
 
     expect(
@@ -27,8 +27,17 @@ describe('ProductDetailPage', () => {
       ),
     ).toBeInTheDocument();
     expect(
+      screen.getAllByText(
+        'A lightweight everyday optical frame with a clean rectangular profile and comfortable nose pads.',
+      ),
+    ).toHaveLength(1);
+    expect(
       screen.getByRole('link', { name: 'Back to products' }),
     ).toHaveAttribute('href', '/products');
+
+    await waitFor(() => {
+      expect(document.title).toBe('Austen Classic | Darshana Opticals');
+    });
   });
 
   it('handles an unknown product id locally', async () => {
@@ -40,5 +49,9 @@ describe('ProductDetailPage', () => {
     expect(
       screen.getByRole('link', { name: 'Back to products' }),
     ).toHaveAttribute('href', '/products');
+
+    await waitFor(() => {
+      expect(document.title).toBe('Product Not Found | Darshana Opticals');
+    });
   });
 });
