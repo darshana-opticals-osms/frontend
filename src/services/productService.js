@@ -1,4 +1,6 @@
-import products from '../data/products';
+import apiClient from './apiClient';
+
+export const CATALOG_CATEGORIES = ['Men', 'Women', 'Kids', 'Sunglasses'];
 
 function toFiniteNumberOrNull(value) {
   if (value === '' || value === null || value === undefined) {
@@ -13,39 +15,101 @@ function uniqueSorted(values) {
   return [...new Set(values)].sort((a, b) => a.localeCompare(b));
 }
 
-export function getCatalogOptions() {
-  const prices = products.map((product) => product.price);
-
+function normalizeProduct(product) {
   return {
-    categories: ['Men', 'Women', 'Kids', 'Sunglasses'],
-    brands: uniqueSorted(products.map((product) => product.brand)),
-    minPrice: Math.min(...prices),
-    maxPrice: Math.max(...prices),
+    id: product.id,
+    name: product.itemName,
+    category: product.category,
+    brand: product.brand,
+    price: product.price,
   };
 }
 
-export async function getProducts(filters = {}) {
-  const search = String(filters.search || '')
-    .trim()
-    .toLowerCase();
+function buildProductQuery(filters = {}) {
+  const params = new URLSearchParams();
+
+  const search = String(filters.search || '').trim();
   const category = String(filters.category || '').trim();
   const brand = String(filters.brand || '').trim();
+  const minPrice = toFiniteNumberOrNull(filters.minPrice);
   const maxPrice = toFiniteNumberOrNull(filters.maxPrice);
 
-  return products.filter((product) => {
-    const matchesSearch =
-      !search ||
-      [product.name, product.brand, product.category].some((value) =>
-        value.toLowerCase().includes(search),
-      );
-    const matchesCategory = !category || product.category === category;
-    const matchesBrand = !brand || product.brand === brand;
-    const matchesPrice = maxPrice === null || product.price <= maxPrice;
+  if (search) {
+    params.set('search', search);
+  }
 
-    return matchesSearch && matchesCategory && matchesBrand && matchesPrice;
+  if (category) {
+    params.set('category', category);
+  }
+
+  if (brand) {
+    params.set('brand', brand);
+  }
+
+  if (minPrice !== null && minPrice >= 0) {
+    params.set('minPrice', String(minPrice));
+  }
+
+  if (maxPrice !== null && maxPrice >= 0) {
+    params.set('maxPrice', String(maxPrice));
+  }
+
+  return params.toString();
+}
+
+export async function getProducts(filters = {}) {
+  const query = buildProductQuery(filters);
+  const path = query ? `/products?${query}` : '/products';
+
+  const response = await apiClient.get(path, {
+    authenticated: false,
   });
+
+  if (!Array.isArray(response?.data)) {
+    return [];
+  }
+
+  return response.data.map(normalizeProduct);
+}
+
+export async function getCatalogOptions() {
+  const products = await getProducts();
+
+  const brands = uniqueSorted(
+    products.map((product) => product.brand).filter(Boolean),
+  );
+
+  const prices = products
+    .map((product) => product.price)
+    .filter(Number.isFinite);
+
+  return {
+    categories: CATALOG_CATEGORIES,
+    brands,
+    minPrice: prices.length > 0 ? Math.min(...prices) : 0,
+    maxPrice: prices.length > 0 ? Math.max(...prices) : 0,
+  };
 }
 
 export async function getProductById(id) {
-  return products.find((product) => product.id === id) || null;
+  try {
+    const response = await apiClient.get(
+      `/products/${encodeURIComponent(id)}`,
+      {
+        authenticated: false,
+      },
+    );
+
+    if (!response?.data) {
+      return null;
+    }
+
+    return normalizeProduct(response.data);
+  } catch (error) {
+    if (error.status === 404) {
+      return null;
+    }
+
+    throw error;
+  }
 }

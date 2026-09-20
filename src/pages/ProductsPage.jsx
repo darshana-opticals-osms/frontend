@@ -15,6 +15,7 @@ function ProductsPage() {
     options,
     updateFilter,
     clearFilters,
+    clearPriceFilters,
   } = useProductCatalog();
 
   const title =
@@ -34,7 +35,9 @@ function ProductsPage() {
       <header className="catalog-page__heading">
         <div>
           <p className="catalog-page__eyebrow">Darshana Opticals Collection</p>
+
           <h1>{title}</h1>
+
           <p>
             {loading
               ? 'Loading styles...'
@@ -58,6 +61,7 @@ function ProductsPage() {
           options={options}
           onFilterChange={updateFilter}
           onClear={clearFilters}
+          onResetPrice={clearPriceFilters}
         />
 
         <div className="catalog-page__results">

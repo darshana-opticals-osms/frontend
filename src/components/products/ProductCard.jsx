@@ -3,6 +3,12 @@ import { formatCurrency } from '../../utils/formatCurrency';
 import './ProductCard.css';
 
 function ProductCard({ product }) {
+  const hasImage = Boolean(product.imageUrl);
+
+  const meta = product.frameType
+    ? `${product.category} | ${product.frameType}`
+    : product.category;
+
   return (
     <article className="product-card">
       <Link
@@ -11,25 +17,37 @@ function ProductCard({ product }) {
         aria-label={`View ${product.name}`}
       >
         <div className="product-card__image-wrap">
-          <img
-            className="product-card__image"
-            src={product.imageUrl}
-            alt={product.imageAlt}
-          />
+          {hasImage ? (
+            <img
+              className="product-card__image"
+              src={product.imageUrl}
+              alt={product.imageAlt || `${product.name} product image`}
+            />
+          ) : (
+            <div
+              className="product-card__image"
+              role="img"
+              aria-label={`${product.name} image unavailable`}
+            >
+              Image unavailable
+            </div>
+          )}
         </div>
 
         <div className="product-card__body">
           <p className="product-card__brand">{product.brand}</p>
           <h2 className="product-card__name">{product.name}</h2>
-          <p className="product-card__meta">
-            {product.category} | {product.frameType}
-          </p>
+
+          <p className="product-card__meta">{meta}</p>
+
           <div className="product-card__price-row">
             <strong>{formatCurrency(product.price)}</strong>
+
             {product.originalPrice > product.price ? (
               <span>{formatCurrency(product.originalPrice)}</span>
             ) : null}
           </div>
+
           <span className="product-card__details">View details</span>
         </div>
       </Link>
