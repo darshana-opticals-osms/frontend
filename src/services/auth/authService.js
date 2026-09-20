@@ -1,4 +1,4 @@
-import apiClient from '../apiClient';
+﻿import apiClient from '../apiClient';
 import authStorage from './authStorage';
 
 async function register({ firstName, lastName, email, phone, password }) {
@@ -47,6 +47,12 @@ function getCurrentUser() {
   return authStorage.getUser();
 }
 
+function updateCurrentUser(user) {
+  authStorage.saveUser(user);
+
+  return user;
+}
+
 function isAuthenticated() {
   return Boolean(authStorage.getToken());
 }
@@ -56,6 +62,7 @@ const authService = {
   login,
   logout,
   getCurrentUser,
+  updateCurrentUser,
   isAuthenticated,
 };
 

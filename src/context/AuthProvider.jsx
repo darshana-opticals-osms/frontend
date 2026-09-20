@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useCallback, useState } from 'react';
 import AuthContext from './AuthContext';
 import authService from '../services/auth/authService';
 
@@ -8,7 +8,7 @@ function AuthProvider({ children }) {
 
   const isAuthenticated = Boolean(user && authService.isAuthenticated());
 
-  async function register(registrationData) {
+  const register = useCallback(async (registrationData) => {
     setIsLoading(true);
 
     try {
@@ -16,9 +16,9 @@ function AuthProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, []);
 
-  async function login(credentials) {
+  const login = useCallback(async (credentials) => {
     setIsLoading(true);
 
     try {
@@ -29,12 +29,17 @@ function AuthProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, []);
 
-  function logout() {
+  const updateUser = useCallback((updatedUser) => {
+    const storedUser = authService.updateCurrentUser(updatedUser);
+    setUser(storedUser);
+  }, []);
+
+  const logout = useCallback(() => {
     authService.logout();
     setUser(null);
-  }
+  }, []);
 
   const value = {
     user,
@@ -42,6 +47,7 @@ function AuthProvider({ children }) {
     isLoading,
     register,
     login,
+    updateUser,
     logout,
   };
 
