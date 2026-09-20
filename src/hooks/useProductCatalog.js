@@ -133,15 +133,15 @@ function useProductCatalog() {
   };
 
   return {
-  products,
-  loading: loading || optionsLoading,
-  error,
-  filters,
-  options,
-  updateFilter,
-  clearFilters,
-  clearPriceFilters,
-};
+    products,
+    loading: loading || optionsLoading,
+    error,
+    filters,
+    options,
+    updateFilter,
+    clearFilters,
+    clearPriceFilters,
+  };
 }
 
 export default useProductCatalog;
