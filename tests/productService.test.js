@@ -1,72 +1,202 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import apiClient from '../src/services/apiClient';
 import {
+  CATALOG_CATEGORIES,
   getCatalogOptions,
   getProductById,
   getProducts,
 } from '../src/services/productService';
 
+vi.mock('../src/services/apiClient', () => ({
+  default: {
+    get: vi.fn(),
+  },
+}));
+
 describe('productService', () => {
-  it('returns all catalog products when no filters are supplied', async () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('loads products from the backend API and normalizes the response', async () => {
+    apiClient.get.mockResolvedValueOnce({
+      success: true,
+      data: [
+        {
+          id: 'product-1',
+          itemName: 'Austen Classic',
+          category: 'Men',
+          brand: 'Oliver Peoples',
+          price: 12500,
+        },
+      ],
+    });
+
     const products = await getProducts();
 
-    expect(products.length).toBeGreaterThan(0);
+    expect(apiClient.get).toHaveBeenCalledWith('/products', {
+      authenticated: false,
+    });
+
+    expect(products).toEqual([
+      {
+        id: 'product-1',
+        name: 'Austen Classic',
+        category: 'Men',
+        brand: 'Oliver Peoples',
+        price: 12500,
+      },
+    ]);
   });
 
-  it('filters by category', async () => {
-    const products = await getProducts({ category: 'Men' });
+  it('sends search and filter values as backend query parameters', async () => {
+    apiClient.get.mockResolvedValueOnce({
+      success: true,
+      data: [],
+    });
 
-    expect(products.length).toBeGreaterThan(0);
-    expect(products.every((product) => product.category === 'Men')).toBe(true);
-  });
+    await getProducts({
+      search: 'pilot',
+      category: 'Men',
+      brand: 'Ray-Ban',
+      minPrice: 5000,
+      maxPrice: 15000,
+    });
 
-  it('filters by brand', async () => {
-    const products = await getProducts({ brand: 'Oliver Peoples' });
-
-    expect(products.length).toBeGreaterThan(0);
-    expect(
-      products.every((product) => product.brand === 'Oliver Peoples'),
-    ).toBe(true);
-  });
-
-  it('filters by search text', async () => {
-    const products = await getProducts({ search: 'coastal' });
-
-    expect(products).toHaveLength(1);
-    expect(products[0].name).toBe('Coastal Pilot');
-  });
-
-  it('filters by maximum price without treating an empty value as zero', async () => {
-    const allProducts = await getProducts({ maxPrice: '' });
-    const cheaperProducts = await getProducts({ maxPrice: 13000 });
-
-    expect(allProducts.length).toBeGreaterThan(cheaperProducts.length);
-    expect(cheaperProducts.every((product) => product.price <= 13000)).toBe(
-      true,
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/products?search=pilot&category=Men&brand=Ray-Ban&minPrice=5000&maxPrice=15000',
+      {
+        authenticated: false,
+      },
     );
   });
 
-  it('supports combined filters', async () => {
-    const products = await getProducts({
-      category: 'Women',
-      brand: 'Warby Parker',
-      maxPrice: 13000,
+  it('does not send empty filter values', async () => {
+    apiClient.get.mockResolvedValueOnce({
+      success: true,
+      data: [],
     });
 
-    expect(products).toHaveLength(1);
-    expect(products[0].name).toBe('Meridian Slim');
+    await getProducts({
+      search: ' ',
+      category: '',
+      brand: '',
+      minPrice: '',
+      maxPrice: '',
+    });
+
+    expect(apiClient.get).toHaveBeenCalledWith('/products', {
+      authenticated: false,
+    });
   });
 
-  it('returns a product by id and null for an unknown id', async () => {
-    const product = await getProductById('austen-classic');
-    const missing = await getProductById('missing-product');
+  it('returns an empty array when the backend response has no product array', async () => {
+    apiClient.get.mockResolvedValueOnce({
+      success: true,
+      data: null,
+    });
 
-    expect(product?.name).toBe('Austen Classic');
-    expect(missing).toBeNull();
+    await expect(getProducts()).resolves.toEqual([]);
   });
 
-  it('exposes the approved category options', () => {
-    const options = getCatalogOptions();
+  it('builds catalog filter options from backend product data', async () => {
+    apiClient.get.mockResolvedValueOnce({
+      success: true,
+      data: [
+        {
+          id: 'product-1',
+          itemName: 'Austen Classic',
+          category: 'Men',
+          brand: 'Oliver Peoples',
+          price: 12500,
+        },
+        {
+          id: 'product-2',
+          itemName: 'Coastal Pilot',
+          category: 'Sunglasses',
+          brand: 'Ray-Ban',
+          price: 18000,
+        },
+        {
+          id: 'product-3',
+          itemName: 'Junior Flex',
+          category: 'Kids',
+          brand: 'Oliver Peoples',
+          price: 8990,
+        },
+      ],
+    });
 
-    expect(options.categories).toEqual(['Men', 'Women', 'Kids', 'Sunglasses']);
-    expect(options.brands.length).toBeGreaterThan(0);
+    const options = await getCatalogOptions();
+
+    expect(options).toEqual({
+      categories: CATALOG_CATEGORIES,
+      brands: ['Oliver Peoples', 'Ray-Ban'],
+      minPrice: 8990,
+      maxPrice: 18000,
+    });
+  });
+
+  it('returns safe catalog options when the backend catalog is empty', async () => {
+    apiClient.get.mockResolvedValueOnce({
+      success: true,
+      data: [],
+    });
+
+    const options = await getCatalogOptions();
+
+    expect(options).toEqual({
+      categories: CATALOG_CATEGORIES,
+      brands: [],
+      minPrice: 0,
+      maxPrice: 0,
+    });
+  });
+
+  it('loads and normalizes one product by id', async () => {
+    apiClient.get.mockResolvedValueOnce({
+      success: true,
+      data: {
+        id: 'product-1',
+        itemName: 'Austen Classic',
+        category: 'Men',
+        brand: 'Oliver Peoples',
+        price: 12500,
+      },
+    });
+
+    const product = await getProductById('product-1');
+
+    expect(apiClient.get).toHaveBeenCalledWith('/products/product-1', {
+      authenticated: false,
+    });
+
+    expect(product).toEqual({
+      id: 'product-1',
+      name: 'Austen Classic',
+      category: 'Men',
+      brand: 'Oliver Peoples',
+      price: 12500,
+    });
+  });
+
+  it('returns null when the product does not exist', async () => {
+    const error = new Error('Product not found.');
+    error.status = 404;
+
+    apiClient.get.mockRejectedValueOnce(error);
+
+    await expect(getProductById('missing-product')).resolves.toBeNull();
+  });
+
+  it('rethrows non-404 backend errors', async () => {
+    const error = new Error('Server unavailable.');
+    error.status = 500;
+
+    apiClient.get.mockRejectedValueOnce(error);
+
+    await expect(getProductById('product-1')).rejects.toThrow(
+      'Server unavailable.',
+    );
   });
 });

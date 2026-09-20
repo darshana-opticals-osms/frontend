@@ -15,10 +15,18 @@ const product = {
   frameType: 'Full Rim',
 };
 
-function renderCard() {
+const backendProduct = {
+  id: 'backend-frame',
+  name: 'Backend Frame',
+  brand: 'Backend Brand',
+  category: 'Men',
+  price: 10000,
+};
+
+function renderCard(productToRender = product) {
   return render(
     <MemoryRouter>
-      <ProductCard product={product} />
+      <ProductCard product={productToRender} />
     </MemoryRouter>,
   );
 }
@@ -34,6 +42,23 @@ describe('ProductCard', () => {
     expect(
       screen.getByAltText('Black rectangular test frame'),
     ).toBeInTheDocument();
+  });
+
+  it('renders safely when only backend product fields are available', () => {
+    renderCard(backendProduct);
+
+    expect(screen.getByText('Backend Frame')).toBeInTheDocument();
+    expect(screen.getByText('Backend Brand')).toBeInTheDocument();
+    expect(screen.getByText('Rs.10,000')).toBeInTheDocument();
+    expect(screen.getByText('Men')).toBeInTheDocument();
+
+    expect(
+      screen.getByRole('img', {
+        name: 'Backend Frame image unavailable',
+      }),
+    ).toBeInTheDocument();
+
+    expect(screen.queryByText(/undefined/i)).not.toBeInTheDocument();
   });
 
   it('uses one product-detail link for the entire card', () => {
@@ -56,6 +81,7 @@ describe('ProductCard', () => {
     expect(screen.getByRole('link', { name: 'View Test Frame' })).toHaveFocus();
 
     await user.tab();
+
     expect(
       screen.getByRole('link', { name: 'View Test Frame' }),
     ).not.toHaveFocus();
