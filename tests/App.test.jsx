@@ -1,11 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import App from '../src/App';
+import AuthProvider from '../src/context/AuthProvider';
 
 function renderAppAt(initialRoute) {
   return render(
     <MemoryRouter initialEntries={[initialRoute]}>
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </MemoryRouter>,
   );
 }

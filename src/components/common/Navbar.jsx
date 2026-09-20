@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import logo from '../../assets/darshana-logo.jpg';
+import useAuth from '../../hooks/useAuth';
 import SearchBar from '../products/SearchBar';
 import './Navbar.css';
 
@@ -9,10 +10,13 @@ const categoryLinks = ['Men', 'Women', 'Kids', 'Sunglasses'];
 function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isAuthenticated, logout } = useAuth();
+
   const currentParams = new URLSearchParams(location.search);
   const currentSearch = location.pathname.startsWith('/products')
     ? currentParams.get('q') || ''
     : '';
+
   const [query, setQuery] = useState(currentSearch);
 
   useEffect(() => {
@@ -23,6 +27,7 @@ function Navbar() {
     const next = new URLSearchParams(
       location.pathname.startsWith('/products') ? location.search : '',
     );
+
     const cleanValue = value.trim();
 
     if (cleanValue) {
@@ -36,6 +41,11 @@ function Navbar() {
       search: next.toString() ? `?${next.toString()}` : '',
     });
   };
+
+  function handleLogout() {
+    logout();
+    navigate('/login', { replace: true });
+  }
 
   return (
     <header className="site-header">
@@ -51,6 +61,7 @@ function Navbar() {
             className="navbar__brand-logo"
             aria-hidden="true"
           />
+
           <span className="navbar__brand-copy">
             <span className="navbar__brand-name">Darshana Opticals</span>
             <span className="navbar__brand-tagline">Eyewear Studio</span>
@@ -80,14 +91,29 @@ function Navbar() {
         </div>
 
         <ul className="navbar__account-links">
-          <li>
-            <Link to="/login">Log In</Link>
-          </li>
-          <li>
-            <Link className="navbar__signup-link" to="/signup">
-              Sign Up
-            </Link>
-          </li>
+          {isAuthenticated ? (
+            <li>
+              <button
+                type="button"
+                className="navbar__logout-button"
+                onClick={handleLogout}
+              >
+                Log Out
+              </button>
+            </li>
+          ) : (
+            <>
+              <li>
+                <Link to="/login">Log In</Link>
+              </li>
+
+              <li>
+                <Link className="navbar__signup-link" to="/signup">
+                  Sign Up
+                </Link>
+              </li>
+            </>
+          )}
         </ul>
       </nav>
     </header>

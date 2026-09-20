@@ -1,25 +1,68 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
+import AuthProvider from '../src/context/AuthProvider';
 import LoginPage from '../src/pages/LoginPage';
+import authService from '../src/services/auth/authService';
+
+vi.mock('../src/services/auth/authService', () => ({
+  default: {
+    getCurrentUser: vi.fn(() => null),
+    isAuthenticated: vi.fn(() => false),
+    register: vi.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
+  },
+}));
 
 function renderLoginPage() {
   return render(
     <MemoryRouter>
-      <LoginPage />
+      <AuthProvider>
+        <LoginPage />
+      </AuthProvider>
     </MemoryRouter>,
   );
 }
 
+async function fillValidLoginForm(user) {
+  await user.type(screen.getByLabelText(/email address/i), 'jane@example.com');
+
+  await user.type(screen.getByLabelText(/^password$/i), 'Password123');
+}
+
 describe('LoginPage', () => {
+  beforeEach(() => {
+    authService.getCurrentUser.mockReturnValue(null);
+    authService.isAuthenticated.mockReturnValue(false);
+
+    authService.login.mockReset();
+
+    authService.login.mockResolvedValue({
+      id: 'customer-1',
+      name: 'Jane Doe',
+      email: 'jane@example.com',
+      role: 'CUSTOMER',
+    });
+  });
+
   it('renders email and password fields', () => {
     renderLoginPage();
 
     expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
+
     expect(
       screen.getByRole('button', { name: /sign in/i }),
     ).toBeInTheDocument();
+  });
+
+  it('does not render the removed Remember me for 30 days option', () => {
+    renderLoginPage();
+
+    expect(
+      screen.queryByText(/remember me for 30 days/i),
+    ).not.toBeInTheDocument();
   });
 
   it('masks the password field by default', () => {
@@ -31,19 +74,20 @@ describe('LoginPage', () => {
     );
   });
 
-  it('renders the Forgot password control as a link-styled, non-navigating control', () => {
+  it('renders the Forgot password control as a non-navigating control', () => {
     renderLoginPage();
 
     const forgotPassword = screen.getByRole('button', {
       name: /forgot password\?/i,
     });
+
     expect(forgotPassword).toBeInTheDocument();
-    // Deliberately not a real link/route - no reset flow in this issue.
     expect(forgotPassword).not.toHaveAttribute('href');
   });
 
-  it('shows validation errors and blocks submission when required fields are empty', async () => {
+  it('shows validation errors and blocks login when required fields are empty', async () => {
     const user = userEvent.setup();
+
     renderLoginPage();
 
     await user.click(screen.getByRole('button', { name: /sign in/i }));
@@ -51,43 +95,121 @@ describe('LoginPage', () => {
     expect(
       await screen.findAllByText(/this field is required/i),
     ).not.toHaveLength(0);
+
     expect(screen.getByLabelText(/email address/i)).toHaveAttribute(
       'aria-invalid',
       'true',
     );
+
     expect(screen.getByLabelText(/^password$/i)).toHaveAttribute(
       'aria-invalid',
       'true',
     );
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    expect(authService.login).not.toHaveBeenCalled();
   });
 
   it('rejects an invalid email format', async () => {
     const user = userEvent.setup();
+
     renderLoginPage();
 
     await user.type(screen.getByLabelText(/email address/i), 'invalid-email');
-    await user.type(screen.getByLabelText(/^password$/i), 'somepassword');
+
+    await user.type(screen.getByLabelText(/^password$/i), 'Password123');
+
     await user.click(screen.getByRole('button', { name: /sign in/i }));
 
     expect(
       await screen.findByText(/enter a valid email address/i),
     ).toBeInTheDocument();
+
+    expect(authService.login).not.toHaveBeenCalled();
   });
 
-  it('accepts a fully valid form', async () => {
+  it('submits valid credentials and establishes login successfully', async () => {
     const user = userEvent.setup();
+
     renderLoginPage();
 
-    await user.type(
-      screen.getByLabelText(/email address/i),
-      'jane@example.com',
-    );
-    await user.type(screen.getByLabelText(/^password$/i), 'Password123');
+    await fillValidLoginForm(user);
+
     await user.click(screen.getByRole('button', { name: /sign in/i }));
 
+    await waitFor(() => {
+      expect(authService.login).toHaveBeenCalledWith({
+        email: 'jane@example.com',
+        password: 'Password123',
+      });
+    });
+
     expect(await screen.findByRole('status')).toHaveTextContent(
-      /form is valid/i,
+      /signed in successfully/i,
+    );
+
+    expect(screen.getByLabelText(/^password$/i)).toHaveValue('');
+  });
+
+  it('shows a backend login error and does not establish a session', async () => {
+    authService.login.mockRejectedValueOnce(
+      new Error('Invalid email or password.'),
+    );
+
+    const user = userEvent.setup();
+
+    renderLoginPage();
+
+    await fillValidLoginForm(user);
+
+    await user.click(screen.getByRole('button', { name: /sign in/i }));
+
+    expect(
+      await screen.findByText(/invalid email or password/i),
+    ).toBeInTheDocument();
+
+    expect(screen.getByRole('button', { name: /sign in/i })).toBeEnabled();
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('prevents repeated login submissions while authentication is loading', async () => {
+    let resolveLogin;
+
+    authService.login.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveLogin = resolve;
+        }),
+    );
+
+    const user = userEvent.setup();
+
+    renderLoginPage();
+
+    await fillValidLoginForm(user);
+
+    await user.click(screen.getByRole('button', { name: /sign in/i }));
+
+    const loadingButton = screen.getByRole('button', {
+      name: /signing in/i,
+    });
+
+    expect(loadingButton).toBeDisabled();
+    expect(authService.login).toHaveBeenCalledTimes(1);
+
+    await user.click(loadingButton);
+
+    expect(authService.login).toHaveBeenCalledTimes(1);
+
+    resolveLogin({
+      id: 'customer-1',
+      name: 'Jane Doe',
+      email: 'jane@example.com',
+      role: 'CUSTOMER',
+    });
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      /signed in successfully/i,
     );
   });
 });
