@@ -1,0 +1,27 @@
+.catalog-empty {
+  grid-column: 1 / -1;
+  padding: 3rem 1rem;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  background: #ffffff;
+  text-align: center;
+}
+
+.catalog-empty h2 {
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.catalog-empty p {
+  color: #64748b;
+}
+
+.catalog-empty button {
+  border: 0;
+  border-radius: 8px;
+  padding: 0.7rem 1rem;
+  background: #173d92;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
