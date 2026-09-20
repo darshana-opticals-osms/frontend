@@ -6,12 +6,21 @@ import useAuth from '../src/hooks/useAuth';
 
 vi.mock('../src/hooks/useAuth');
 
-function renderNavbar() {
+function renderNavbar(initialEntry = '/') {
   return render(
-    <MemoryRouter initialEntries={['/']}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route path="/" element={<Navbar />} />
         <Route path="/login" element={<h1>Login destination</h1>} />
+        <Route
+          path="/products"
+          element={
+            <>
+              <Navbar />
+              <h1>Products destination</h1>
+            </>
+          }
+        />
       </Routes>
     </MemoryRouter>,
   );
@@ -79,6 +88,58 @@ describe('Navbar authentication controls', () => {
     expect(
       await screen.findByRole('heading', {
         name: /login destination/i,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('navigates to the product catalog when a search is submitted', async () => {
+    useAuth.mockReturnValue({
+      isAuthenticated: false,
+      logout: vi.fn(),
+    });
+
+    const user = userEvent.setup();
+
+    renderNavbar();
+
+    const searchInput = screen.getByRole('searchbox', {
+      name: /search frames/i,
+    });
+
+    await user.type(searchInput, 'pilot');
+    await user.keyboard('{Enter}');
+
+    expect(
+      await screen.findByRole('heading', {
+        name: /products destination/i,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('clears an existing product search when an empty search is submitted', async () => {
+    useAuth.mockReturnValue({
+      isAuthenticated: false,
+      logout: vi.fn(),
+    });
+
+    const user = userEvent.setup();
+
+    renderNavbar('/products?q=pilot');
+
+    const searchInput = screen.getByRole('searchbox', {
+      name: /search frames/i,
+    });
+
+    expect(searchInput).toHaveValue('pilot');
+
+    await user.clear(searchInput);
+    await user.keyboard('{Enter}');
+
+    expect(searchInput).toHaveValue('');
+
+    expect(
+      await screen.findByRole('heading', {
+        name: /products destination/i,
       }),
     ).toBeInTheDocument();
   });
