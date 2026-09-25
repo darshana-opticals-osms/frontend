@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import useAuth from '../hooks/useAuth';
 import FormField from '../components/forms/FormField';
@@ -67,11 +67,11 @@ function LoginPage() {
   useDocumentTitle('Log In | Darshana Opticals');
 
   const { login, isLoading } = useAuth();
+  const navigate = useNavigate();
 
   const [values, setValues] = useState(initialFormState);
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
-  const [loginSucceeded, setLoginSucceeded] = useState(false);
 
   function handleChange(field) {
     return (event) => {
@@ -81,7 +81,6 @@ function LoginPage() {
       }));
 
       setApiError('');
-      setLoginSucceeded(false);
     };
   }
 
@@ -96,7 +95,6 @@ function LoginPage() {
 
     setErrors(validationErrors);
     setApiError('');
-    setLoginSucceeded(false);
 
     if (Object.keys(validationErrors).length > 0) {
       return;
@@ -107,13 +105,7 @@ function LoginPage() {
         email: values.email,
         password: values.password,
       });
-
-      setLoginSucceeded(true);
-
-      setValues((previous) => ({
-        ...previous,
-        password: '',
-      }));
+      navigate('/', { replace: true });
     } catch (error) {
       setApiError(error.message || 'Unable to sign in. Please try again.');
     }
@@ -142,7 +134,6 @@ function LoginPage() {
               placeholder="you@example.com"
               icon={MailIcon}
             />
-
             <FormField
               id="password"
               label="Password"
@@ -156,7 +147,6 @@ function LoginPage() {
               revealable
               labelExtra={<ForgotPasswordLink />}
             />
-
             <button
               type="submit"
               className="auth-submit-button"
@@ -165,18 +155,11 @@ function LoginPage() {
               {isLoading ? 'Signing In...' : 'Sign In'}
               {!isLoading ? <ArrowRightIcon /> : null}
             </button>
-
             {apiError ? (
               <p role="alert" className="auth-error-text">
                 {apiError}
               </p>
-            ) : null}
-
-            {loginSucceeded ? (
-              <p role="status" className="login-page__success">
-                Signed in successfully.
-              </p>
-            ) : null}
+            ) : null}{' '}
           </form>
 
           <p className="auth-card__footer">
