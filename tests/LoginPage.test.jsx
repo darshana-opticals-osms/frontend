@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import AuthProvider from '../src/context/AuthProvider';
 import LoginPage from '../src/pages/LoginPage';
 import authService from '../src/services/auth/authService';
@@ -17,9 +17,12 @@ vi.mock('../src/services/auth/authService', () => ({
 
 function renderLoginPage() {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={['/login']}>
       <AuthProvider>
-        <LoginPage />
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/" element={<p>Home page test marker</p>} />
+        </Routes>
       </AuthProvider>
     </MemoryRouter>,
   );
@@ -143,11 +146,9 @@ describe('LoginPage', () => {
       });
     });
 
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      /signed in successfully/i,
-    );
-
-    expect(screen.getByLabelText(/^password$/i)).toHaveValue('');
+    expect(
+      await screen.findByText(/home page test marker/i),
+    ).toBeInTheDocument();
   });
 
   it('shows a backend login error and does not establish a session', async () => {
@@ -208,8 +209,8 @@ describe('LoginPage', () => {
       role: 'CUSTOMER',
     });
 
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      /signed in successfully/i,
-    );
+    expect(
+      await screen.findByText(/home page test marker/i),
+    ).toBeInTheDocument();
   });
 });
