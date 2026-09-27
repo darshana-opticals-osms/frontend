@@ -256,4 +256,20 @@ describe('apiClient', () => {
       code: 'NETWORK_ERROR',
     });
   });
+
+  it('sends PUT requests with the provided body', async () => {
+    await apiClient.put('/profile', {
+      name: 'Jane Updated',
+    });
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({
+          name: 'Jane Updated',
+        }),
+      }),
+    );
+  });
 });
