@@ -27,11 +27,24 @@ async function request(path, options = {}) {
     }
   }
 
-  const response = await fetch(buildUrl(path), {
-    method,
-    headers: requestHeaders,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  let response;
+
+  try {
+    response = await fetch(buildUrl(path), {
+      method,
+      headers: requestHeaders,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    const error = new Error(
+      'Unable to reach the server. Please check your connection and try again.',
+    );
+
+    error.status = 0;
+    error.code = 'NETWORK_ERROR';
+
+    throw error;
+  }
 
   let responseData = null;
 
@@ -79,6 +92,14 @@ const apiClient = {
     return request(path, {
       ...options,
       method: 'PATCH',
+      body,
+    });
+  },
+
+  put(path, body, options = {}) {
+    return request(path, {
+      ...options,
+      method: 'PUT',
       body,
     });
   },
