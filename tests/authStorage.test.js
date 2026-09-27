@@ -1,4 +1,4 @@
-import authStorage from '../src/services/auth/authStorage';
+﻿import authStorage from '../src/services/auth/authStorage';
 
 describe('authStorage', () => {
   beforeEach(() => {
@@ -23,6 +23,27 @@ describe('authStorage', () => {
 
     expect(authStorage.getToken()).toBe(token);
     expect(authStorage.getUser()).toEqual(user);
+  });
+
+  it('updates stored user information without replacing the authentication token', () => {
+    authStorage.saveAuth('test-jwt-token', {
+      id: 'customer-1',
+      name: 'Jane Doe',
+      email: 'jane@example.com',
+      role: 'CUSTOMER',
+    });
+
+    const updatedUser = {
+      id: 'customer-1',
+      name: 'Jane Updated',
+      email: 'jane.updated@example.com',
+      role: 'CUSTOMER',
+    };
+
+    authStorage.saveUser(updatedUser);
+
+    expect(authStorage.getToken()).toBe('test-jwt-token');
+    expect(authStorage.getUser()).toEqual(updatedUser);
   });
 
   it('does not save authentication data when token is missing', () => {
