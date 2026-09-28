@@ -5,14 +5,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ProductDetailPage from '../src/pages/ProductDetailPage';
 import ProductsPage from '../src/pages/ProductsPage';
 import {
-  getCatalogOptions,
+  buildCatalogOptions,
   getProductById,
   getProducts,
 } from '../src/services/productService';
 
 vi.mock('../src/services/productService', () => ({
   CATALOG_CATEGORIES: ['Men', 'Women', 'Kids', 'Sunglasses'],
-  getCatalogOptions: vi.fn(),
+  buildCatalogOptions: vi.fn(),
   getProducts: vi.fn(),
   getProductById: vi.fn(),
 }));
@@ -149,13 +149,22 @@ describe('ProductsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    getCatalogOptions.mockResolvedValue({
-      categories: ['Men', 'Women', 'Kids', 'Sunglasses'],
-      brands: ['Oakley', 'Oliver Peoples', 'Ray-Ban', 'Warby Parker'],
-      minPrice: 8990,
-      maxPrice: 23500,
-    });
+    buildCatalogOptions.mockImplementation((products = []) => {
+      const brands = [...new Set(products.map((product) => product.brand))]
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b));
 
+      const prices = products
+        .map((product) => product.price)
+        .filter(Number.isFinite);
+
+      return {
+        categories: ['Men', 'Women', 'Kids', 'Sunglasses'],
+        brands,
+        minPrice: prices.length > 0 ? Math.min(...prices) : 0,
+        maxPrice: prices.length > 0 ? Math.max(...prices) : 0,
+      };
+    });
     getProducts.mockImplementation(async (filters) => filterProducts(filters));
 
     getProductById.mockImplementation(async (id) => {
@@ -169,6 +178,18 @@ describe('ProductsPage', () => {
     expect(screen.getByText('Loading products...')).toBeInTheDocument();
 
     expect(await screen.findByText('Austen Classic')).toBeInTheDocument();
+  });
+
+  it('reuses the initial product response for catalog options without a duplicate request', async () => {
+    renderCatalog();
+
+    expect(await screen.findByText('Austen Classic')).toBeInTheDocument();
+
+    expect(getProducts).toHaveBeenCalledTimes(1);
+    expect(getProducts).toHaveBeenCalledWith();
+
+    expect(buildCatalogOptions).toHaveBeenCalledTimes(1);
+    expect(buildCatalogOptions).toHaveBeenCalledWith(testProducts);
   });
 
   it('restores category state from a direct URL', async () => {
@@ -289,6 +310,26 @@ describe('ProductsPage', () => {
     expect(screen.queryByText('Austen Classic')).not.toBeInTheDocument();
   });
 
+  it('clears the active search filter', async () => {
+    const user = userEvent.setup();
+
+    renderCatalog('/products?q=coastal');
+
+    expect(await screen.findByText('Coastal Pilot')).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Clear search',
+      }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('location')).toHaveTextContent(/^\/products$/);
+    });
+
+    expect(await screen.findByText('Austen Classic')).toBeInTheDocument();
+  });
+
   it('supports combined filters', async () => {
     renderCatalog('/products?category=Women&brand=Warby+Parker&maxPrice=13000');
 
@@ -366,24 +407,6 @@ describe('ProductsPage', () => {
 
     expect(
       screen.queryByText('Internal database connection failed.'),
-    ).not.toBeInTheDocument();
-  });
-
-  it('shows a friendly message when catalog options fail to load', async () => {
-    getCatalogOptions.mockRejectedValueOnce(
-      new Error('Internal catalog configuration failed.'),
-    );
-
-    renderCatalog();
-
-    expect(
-      await screen.findByText(
-        'We could not load the catalog. Please try again.',
-      ),
-    ).toBeInTheDocument();
-
-    expect(
-      screen.queryByText('Internal catalog configuration failed.'),
     ).not.toBeInTheDocument();
   });
 

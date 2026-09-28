@@ -72,14 +72,14 @@ export async function getProducts(filters = {}) {
   return response.data.map(normalizeProduct);
 }
 
-export async function getCatalogOptions() {
-  const products = await getProducts();
+export function buildCatalogOptions(products = []) {
+  const safeProducts = Array.isArray(products) ? products : [];
 
   const brands = uniqueSorted(
-    products.map((product) => product.brand).filter(Boolean),
+    safeProducts.map((product) => product.brand).filter(Boolean),
   );
 
-  const prices = products
+  const prices = safeProducts
     .map((product) => product.price)
     .filter(Number.isFinite);
 

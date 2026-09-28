@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import apiClient from '../src/services/apiClient';
 import {
+  buildCatalogOptions,
   CATALOG_CATEGORIES,
-  getCatalogOptions,
   getProductById,
   getProducts,
 } from '../src/services/productService';
@@ -99,35 +99,32 @@ describe('productService', () => {
     await expect(getProducts()).resolves.toEqual([]);
   });
 
-  it('builds catalog filter options from backend product data', async () => {
-    apiClient.get.mockResolvedValueOnce({
-      success: true,
-      data: [
-        {
-          id: 'product-1',
-          itemName: 'Austen Classic',
-          category: 'Men',
-          brand: 'Oliver Peoples',
-          price: 12500,
-        },
-        {
-          id: 'product-2',
-          itemName: 'Coastal Pilot',
-          category: 'Sunglasses',
-          brand: 'Ray-Ban',
-          price: 18000,
-        },
-        {
-          id: 'product-3',
-          itemName: 'Junior Flex',
-          category: 'Kids',
-          brand: 'Oliver Peoples',
-          price: 8990,
-        },
-      ],
-    });
+  it('builds catalog filter options from already loaded product data', () => {
+    const products = [
+      {
+        id: 'product-1',
+        name: 'Austen Classic',
+        category: 'Men',
+        brand: 'Oliver Peoples',
+        price: 12500,
+      },
+      {
+        id: 'product-2',
+        name: 'Coastal Pilot',
+        category: 'Sunglasses',
+        brand: 'Ray-Ban',
+        price: 18000,
+      },
+      {
+        id: 'product-3',
+        name: 'Junior Flex',
+        category: 'Kids',
+        brand: 'Oliver Peoples',
+        price: 8990,
+      },
+    ];
 
-    const options = await getCatalogOptions();
+    const options = buildCatalogOptions(products);
 
     expect(options).toEqual({
       categories: CATALOG_CATEGORIES,
@@ -135,15 +132,12 @@ describe('productService', () => {
       minPrice: 8990,
       maxPrice: 18000,
     });
+
+    expect(apiClient.get).not.toHaveBeenCalled();
   });
 
-  it('returns safe catalog options when the backend catalog is empty', async () => {
-    apiClient.get.mockResolvedValueOnce({
-      success: true,
-      data: [],
-    });
-
-    const options = await getCatalogOptions();
+  it('returns safe catalog options when the product list is empty', () => {
+    const options = buildCatalogOptions([]);
 
     expect(options).toEqual({
       categories: CATALOG_CATEGORIES,
@@ -151,6 +145,8 @@ describe('productService', () => {
       minPrice: 0,
       maxPrice: 0,
     });
+
+    expect(apiClient.get).not.toHaveBeenCalled();
   });
 
   it('loads and normalizes one product by id', async () => {

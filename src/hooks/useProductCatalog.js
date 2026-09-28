@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
+  buildCatalogOptions,
   CATALOG_CATEGORIES,
-  getCatalogOptions,
   getProducts,
 } from '../services/productService';
 
@@ -37,6 +37,16 @@ function readFilters(searchKey) {
   };
 }
 
+function hasActiveFilters(filters) {
+  return Boolean(
+    filters.search ||
+    filters.category ||
+    filters.brand ||
+    filters.minPrice !== null ||
+    filters.maxPrice !== null,
+  );
+}
+
 function useProductCatalog() {
   const [searchParams, setSearchParams] = useSearchParams();
   const searchKey = searchParams.toString();
@@ -46,57 +56,52 @@ function useProductCatalog() {
   const [products, setProducts] = useState([]);
   const [options, setOptions] = useState(INITIAL_OPTIONS);
   const [loading, setLoading] = useState(true);
-  const [optionsLoading, setOptionsLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    let active = true;
-
-    getCatalogOptions()
-      .then((result) => {
-        if (active) {
-          setOptions(result);
-        }
-      })
-      .catch(() => {
-        if (active) {
-          setError('We could not load the catalog. Please try again.');
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setOptionsLoading(false);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
+  const optionsInitialized = useRef(false);
 
   useEffect(() => {
     let active = true;
 
-    setLoading(true);
-    setError('');
+    const loadCatalog = async () => {
+      setLoading(true);
+      setError('');
 
-    getProducts(filters)
-      .then((result) => {
+      try {
+        if (!optionsInitialized.current) {
+          const allProducts = await getProducts();
+
+          if (!active) {
+            return;
+          }
+
+          setOptions(buildCatalogOptions(allProducts));
+          optionsInitialized.current = true;
+
+          if (!hasActiveFilters(filters)) {
+            setProducts(allProducts);
+            return;
+          }
+        }
+
+        const result = await getProducts(filters);
+
         if (active) {
           setProducts(result);
         }
-      })
-      .catch(() => {
+      } catch {
         if (active) {
           setProducts([]);
           setError('We could not load the catalog. Please try again.');
         }
-      })
-      .finally(() => {
+      } finally {
         if (active) {
           setLoading(false);
         }
-      });
+      }
+    };
+
+    loadCatalog();
 
     return () => {
       active = false;
@@ -134,7 +139,7 @@ function useProductCatalog() {
 
   return {
     products,
-    loading: loading || optionsLoading,
+    loading,
     error,
     filters,
     options,
