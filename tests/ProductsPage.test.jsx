@@ -253,6 +253,10 @@ describe('ProductsPage', () => {
       name: /minimum price/i,
     });
 
+    await waitFor(() => {
+      expect(slider.value).toBe('12290');
+    });
+
     fireEvent.change(slider, {
       target: { value: '15000' },
     });
