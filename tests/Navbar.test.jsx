@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+﻿import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import Navbar from '../src/components/common/Navbar';
@@ -12,6 +12,7 @@ function renderNavbar(initialEntry = '/') {
       <Routes>
         <Route path="/" element={<Navbar />} />
         <Route path="/login" element={<h1>Login destination</h1>} />
+        <Route path="/profile" element={<h1>Profile destination</h1>} />
         <Route
           path="/products"
           element={
@@ -40,15 +41,16 @@ describe('Navbar authentication controls', () => {
     renderNavbar();
 
     expect(screen.getByRole('link', { name: /log in/i })).toBeInTheDocument();
-
     expect(screen.getByRole('link', { name: /sign up/i })).toBeInTheDocument();
-
+    expect(
+      screen.queryByRole('link', { name: /profile/i }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /log out/i }),
     ).not.toBeInTheDocument();
   });
 
-  it('shows logout instead of login and signup when authenticated', () => {
+  it('shows profile and logout controls when authenticated', () => {
     useAuth.mockReturnValue({
       isAuthenticated: true,
       logout: vi.fn(),
@@ -56,17 +58,35 @@ describe('Navbar authentication controls', () => {
 
     renderNavbar();
 
+    expect(screen.getByRole('link', { name: /profile/i })).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /log out/i }),
     ).toBeInTheDocument();
-
     expect(
       screen.queryByRole('link', { name: /log in/i }),
     ).not.toBeInTheDocument();
-
     expect(
       screen.queryByRole('link', { name: /sign up/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it('opens the customer profile route from the authenticated navbar', async () => {
+    useAuth.mockReturnValue({
+      isAuthenticated: true,
+      logout: vi.fn(),
+    });
+
+    const user = userEvent.setup();
+
+    renderNavbar();
+
+    await user.click(screen.getByRole('link', { name: /profile/i }));
+
+    expect(
+      await screen.findByRole('heading', {
+        name: /profile destination/i,
+      }),
+    ).toBeInTheDocument();
   });
 
   it('logs the user out and redirects to the login page', async () => {

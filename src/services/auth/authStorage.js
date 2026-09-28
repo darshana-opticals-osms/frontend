@@ -1,4 +1,4 @@
-const TOKEN_KEY = 'osms.auth.token';
+﻿const TOKEN_KEY = 'osms.auth.token';
 const USER_KEY = 'osms.auth.user';
 
 function saveAuth(token, user) {
@@ -7,6 +7,14 @@ function saveAuth(token, user) {
   }
 
   localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
+}
+
+function saveUser(user) {
+  if (!user) {
+    return;
+  }
+
   localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
@@ -36,6 +44,7 @@ function clearAuth() {
 
 const authStorage = {
   saveAuth,
+  saveUser,
   getToken,
   getUser,
   clearAuth,

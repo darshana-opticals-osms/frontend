@@ -183,4 +183,93 @@ describe('apiClient', () => {
       }),
     );
   });
+
+  it('normalizes HTTP 400 validation errors', async () => {
+    fetch.mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+      json: vi.fn().mockResolvedValue({
+        success: false,
+        error: {
+          message: 'Invalid request data.',
+          code: 'VALIDATION_ERROR',
+        },
+      }),
+    });
+
+    await expect(
+      apiClient.post('/example', { value: '' }),
+    ).rejects.toMatchObject({
+      message: 'Invalid request data.',
+      status: 400,
+      code: 'VALIDATION_ERROR',
+    });
+  });
+
+  it('distinguishes HTTP 403 authorization failures', async () => {
+    fetch.mockResolvedValueOnce({
+      ok: false,
+      status: 403,
+      json: vi.fn().mockResolvedValue({
+        success: false,
+        error: {
+          message: 'Permission denied.',
+          code: 'FORBIDDEN',
+        },
+      }),
+    });
+
+    await expect(apiClient.get('/admin-only')).rejects.toMatchObject({
+      message: 'Permission denied.',
+      status: 403,
+      code: 'FORBIDDEN',
+    });
+  });
+
+  it('handles HTTP 404 responses safely', async () => {
+    fetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      json: vi.fn().mockResolvedValue({
+        success: false,
+        error: {
+          message: 'Resource not found.',
+          code: 'NOT_FOUND',
+        },
+      }),
+    });
+
+    await expect(apiClient.get('/missing-resource')).rejects.toMatchObject({
+      message: 'Resource not found.',
+      status: 404,
+      code: 'NOT_FOUND',
+    });
+  });
+
+  it('normalizes network failures into a controlled error', async () => {
+    fetch.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+
+    await expect(apiClient.get('/profile')).rejects.toMatchObject({
+      message:
+        'Unable to reach the server. Please check your connection and try again.',
+      status: 0,
+      code: 'NETWORK_ERROR',
+    });
+  });
+
+  it('sends PUT requests with the provided body', async () => {
+    await apiClient.put('/profile', {
+      name: 'Jane Updated',
+    });
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({
+          name: 'Jane Updated',
+        }),
+      }),
+    );
+  });
 });

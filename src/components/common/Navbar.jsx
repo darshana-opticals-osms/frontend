@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import logo from '../../assets/darshana-logo.jpg';
 import useAuth from '../../hooks/useAuth';
@@ -92,15 +92,21 @@ function Navbar() {
 
         <ul className="navbar__account-links">
           {isAuthenticated ? (
-            <li>
-              <button
-                type="button"
-                className="navbar__logout-button"
-                onClick={handleLogout}
-              >
-                Log Out
-              </button>
-            </li>
+            <>
+              <li>
+                <Link to="/profile">Profile</Link>
+              </li>
+
+              <li>
+                <button
+                  type="button"
+                  className="navbar__logout-button"
+                  onClick={handleLogout}
+                >
+                  Log Out
+                </button>
+              </li>
+            </>
           ) : (
             <>
               <li>
