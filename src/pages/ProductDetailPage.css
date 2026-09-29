@@ -36,6 +36,19 @@
   object-fit: cover;
 }
 
+.product-detail__image-placeholder {
+  display: flex;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: #f8fafc;
+  color: #64748b;
+  font-weight: 600;
+  text-align: center;
+}
+
 .product-detail__info {
   padding: 0.5rem 0;
 }

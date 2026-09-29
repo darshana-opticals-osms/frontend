@@ -87,6 +87,10 @@
   accent-color: #173d92;
 }
 
+.filter-panel__price > input + label {
+  margin-top: 0.85rem;
+}
+
 .filter-panel__price-reset {
   margin-top: 0.35rem;
 }
