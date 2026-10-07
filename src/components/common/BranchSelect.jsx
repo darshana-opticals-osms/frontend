@@ -1,6 +1,7 @@
 import './BranchSelect.css';
 
 function buildOptionLabel(branch, { showContactNumber = false } = {}) {
+  // Keep fallback display handling defensive; options still require an ID.
   if (!branch) {
     return 'Unknown branch';
   }
@@ -14,13 +15,15 @@ function buildOptionLabel(branch, { showContactNumber = false } = {}) {
   return address;
 }
 
+/** Native Branch selector; the submitted field name defaults to `id`. */
 function BranchSelect({
   id = 'branch-select',
   label = 'Branch',
   value = '',
   branches = [],
   loading = false,
-  error = '',
+  error = null,
+  validationError = null,
   onChange,
   onRetry,
   required = false,
@@ -29,7 +32,11 @@ function BranchSelect({
   showContactNumber = false,
   name,
 }) {
-  const normalizedBranches = Array.isArray(branches) ? branches : [];
+  const normalizedBranches = Array.isArray(branches)
+    ? branches.filter(
+        (branch) => typeof branch?.id === 'string' && branch.id.trim(),
+      )
+    : [];
 
   if (loading) {
     return (
@@ -38,9 +45,7 @@ function BranchSelect({
         role="status"
         aria-live="polite"
       >
-        <label htmlFor={id} className="branch-select__label">
-          {label}
-        </label>
+        <span className="branch-select__label">{label}</span>
         <div className="branch-select__state">Loading branches...</div>
       </div>
     );
@@ -53,9 +58,7 @@ function BranchSelect({
         role="alert"
         aria-live="assertive"
       >
-        <label htmlFor={id} className="branch-select__label">
-          {label}
-        </label>
+        <span className="branch-select__label">{label}</span>
         <p className="branch-select__message">{error}</p>
         {onRetry ? (
           <button
@@ -73,9 +76,7 @@ function BranchSelect({
   if (!normalizedBranches.length) {
     return (
       <div className="branch-select branch-select--empty" aria-live="polite">
-        <label htmlFor={id} className="branch-select__label">
-          {label}
-        </label>
+        <span className="branch-select__label">{label}</span>
         <p className="branch-select__message">No branches available.</p>
       </div>
     );
@@ -95,23 +96,30 @@ function BranchSelect({
         onChange={(event) => onChange?.(event.target.value)}
         required={required}
         disabled={disabled}
-        aria-invalid={Boolean(error)}
+        aria-invalid={Boolean(validationError)}
+        aria-describedby={
+          validationError ? `${id}-validation-error` : undefined
+        }
       >
         <option value="">{placeholder}</option>
 
         {normalizedBranches.map((branch, index) => {
-          const optionValue = branch?.id ?? '';
-
           return (
-            <option
-              key={optionValue || `branch-option-${index}`}
-              value={optionValue}
-            >
+            <option key={`${branch.id}-${index}`} value={branch.id}>
               {buildOptionLabel(branch, { showContactNumber })}
             </option>
           );
         })}
       </select>
+      {validationError ? (
+        <p
+          id={`${id}-validation-error`}
+          className="branch-select__message branch-select__message--error"
+          role="alert"
+        >
+          {validationError}
+        </p>
+      ) : null}
     </div>
   );
 }

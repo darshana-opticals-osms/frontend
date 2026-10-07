@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import apiClient from '../src/services/apiClient';
+import * as branchService from '../src/services/branchService';
 import { getBranches } from '../src/services/branchService';
 
 vi.mock('../src/services/apiClient', () => ({
@@ -63,6 +64,12 @@ describe('branchService', () => {
     await expect(getBranches()).resolves.toEqual([]);
   });
 
+  it('returns an empty array when the response envelope is missing', async () => {
+    apiClient.get.mockResolvedValueOnce(null);
+
+    await expect(getBranches()).resolves.toEqual([]);
+  });
+
   it('returns an empty array when the backend returns an empty array', async () => {
     apiClient.get.mockResolvedValueOnce({
       success: true,
@@ -72,13 +79,24 @@ describe('branchService', () => {
     await expect(getBranches()).resolves.toEqual([]);
   });
 
-  it('accepts _id fallback and ignores malformed branch records', async () => {
+  it('rejects malformed records and records without a documented Branch ID', async () => {
     apiClient.get.mockResolvedValueOnce({
       success: true,
       data: [
         null,
+        [],
+        {},
         {
-          _id: 'branch-9',
+          address: '130 Kandy Road, Gampola',
+          contactNumber: '+94 81 300 1000',
+        },
+        {
+          _id: 'undocumented-id',
+          address: '130 Kandy Road, Gampola',
+          contactNumber: '+94 81 300 1000',
+        },
+        {
+          id: '',
           address: '130 Kandy Road, Gampola',
           contactNumber: '+94 81 300 1000',
         },
@@ -87,30 +105,29 @@ describe('branchService', () => {
           address: '123 Colombo Road',
           contactNumber: '+94 11 200 2000',
         },
-        {},
       ],
     });
 
-    await expect(getBranches()).resolves.toEqual([
-      {
-        id: 'branch-9',
-        address: '130 Kandy Road, Gampola',
-        contactNumber: '+94 81 300 1000',
-      },
-      {
-        id: '123',
-        address: '123 Colombo Road',
-        contactNumber: '+94 11 200 2000',
-      },
-    ]);
+    await expect(getBranches()).resolves.toEqual([]);
   });
 
-  it('propagates backend and network errors', async () => {
+  it.each([401, 403])(
+    'propagates %s authorization errors unchanged',
+    async (status) => {
+      const authError = new Error(`Request rejected: ${status}`);
+      authError.status = status;
+      apiClient.get.mockRejectedValueOnce(authError);
+
+      await expect(getBranches()).rejects.toBe(authError);
+    },
+  );
+
+  it('propagates server and network errors unchanged', async () => {
     const backendError = new Error('Server unavailable');
     backendError.status = 500;
     apiClient.get.mockRejectedValueOnce(backendError);
 
-    await expect(getBranches()).rejects.toThrow('Server unavailable');
+    await expect(getBranches()).rejects.toBe(backendError);
 
     const networkError = new Error(
       'Unable to reach the server. Please check your connection and try again.',
@@ -119,10 +136,7 @@ describe('branchService', () => {
     networkError.code = 'NETWORK_ERROR';
     apiClient.get.mockRejectedValueOnce(networkError);
 
-    await expect(getBranches()).rejects.toMatchObject({
-      status: 0,
-      code: 'NETWORK_ERROR',
-    });
+    await expect(getBranches()).rejects.toBe(networkError);
   });
 
   it('does not expose or fabricate branch names', async () => {
@@ -148,5 +162,11 @@ describe('branchService', () => {
     expect(branches[0]).not.toHaveProperty('_id');
     expect(branches[0]).not.toHaveProperty('__v');
     expect(branches[0]).not.toHaveProperty('createdAt');
+  });
+
+  it('does not export Branch mutation methods', () => {
+    expect(branchService.createBranch).toBeUndefined();
+    expect(branchService.updateBranch).toBeUndefined();
+    expect(branchService.deleteBranch).toBeUndefined();
   });
 });

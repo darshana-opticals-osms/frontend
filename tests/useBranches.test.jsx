@@ -37,7 +37,7 @@ describe('useBranches', () => {
         contactNumber: '+94 81 220 0000',
       },
     ]);
-    expect(result.current.error).toBe('');
+    expect(result.current.error).toBeNull();
   });
 
   it('supports an empty branch list and clears previous error state', async () => {
@@ -50,7 +50,7 @@ describe('useBranches', () => {
     });
 
     expect(result.current.branches).toEqual([]);
-    expect(result.current.error).toBe('');
+    expect(result.current.error).toBeNull();
   });
 
   it('sets a safe user-facing error when loading fails', async () => {
@@ -107,5 +107,66 @@ describe('useBranches', () => {
         contactNumber: '+94 11 250 0000',
       },
     ]);
+  });
+
+  it('ignores stale responses when a newer retry finishes first', async () => {
+    let resolveInitial;
+    let resolveRetry;
+    getBranches
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveInitial = resolve;
+        }),
+      )
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveRetry = resolve;
+        }),
+      );
+
+    const { result } = renderHook(() => useBranches());
+
+    await act(async () => {
+      result.current.retry();
+    });
+
+    const latestBranches = [
+      { id: 'latest', address: '10 Main Street, Kandy', contactNumber: '' },
+    ];
+    await act(async () => {
+      resolveRetry(latestBranches);
+    });
+
+    await act(async () => {
+      resolveInitial([
+        { id: 'stale', address: '1 Old Road, Kandy', contactNumber: '' },
+      ]);
+    });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.branches).toEqual(latestBranches);
+    expect(getBranches).toHaveBeenCalledTimes(2);
+  });
+
+  it('ignores a pending response and retry call after unmount', async () => {
+    let resolveBranches;
+    getBranches.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveBranches = resolve;
+      }),
+    );
+
+    const { result, unmount } = renderHook(() => useBranches());
+    const retry = result.current.retry;
+    unmount();
+
+    await act(async () => {
+      resolveBranches([
+        { id: 'late', address: '9 Late Road, Kandy', contactNumber: '' },
+      ]);
+      retry();
+    });
+
+    expect(getBranches).toHaveBeenCalledTimes(1);
   });
 });

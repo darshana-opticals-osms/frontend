@@ -1,23 +1,27 @@
 import apiClient from './apiClient';
 
 function normalizeBranch(branch) {
-  if (!branch || typeof branch !== 'object') {
+  if (!branch || typeof branch !== 'object' || Array.isArray(branch)) {
     return null;
   }
 
-  const id = branch.id ?? branch._id;
+  const id = branch.id;
 
-  if (!id && !branch.address && !branch.contactNumber) {
+  if (typeof id !== 'string' || !id.trim()) {
     return null;
   }
 
   return {
-    id: String(id ?? ''),
+    id,
     address: branch.address ?? '',
     contactNumber: branch.contactNumber ?? '',
   };
 }
 
+/**
+ * Loads safe Branch references from the authenticated DDP-069 endpoint.
+ * @returns {Promise<Array<{ id: string, address: string, contactNumber: string }>>}
+ */
 export async function getBranches() {
   const response = await apiClient.get('/branches');
 
@@ -25,7 +29,5 @@ export async function getBranches() {
     return [];
   }
 
-  return response.data
-    .map((branch) => normalizeBranch(branch))
-    .filter((branch) => branch && typeof branch.id === 'string' && branch.id);
+  return response.data.map(normalizeBranch).filter(Boolean);
 }

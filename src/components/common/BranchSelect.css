@@ -21,38 +21,67 @@
 .branch-select__control {
   min-height: 2.75rem;
   padding: 0.75rem 0.875rem;
-  border: 1px solid #d0d7de;
+  border: 1px solid var(--color-border);
   border-radius: 0.5rem;
-  background-color: #fff;
-  color: #1f2933;
+  background-color: var(--color-surface);
+  color: var(--color-text);
   font: inherit;
 }
 
-.branch-select__control:focus {
-  outline: 2px solid #2563eb;
+.branch-select__control:focus-visible {
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+}
+
+.branch-select__control:disabled {
+  cursor: not-allowed;
+  background-color: #f3f4f6;
+  color: var(--color-muted);
+}
+
+.branch-select__control[aria-invalid='true'] {
+  border-color: #b42318;
 }
 
 .branch-select__state,
 .branch-select__message {
   margin: 0;
   padding: 0.75rem 0.875rem;
-  border: 1px solid #d0d7de;
+  border: 1px solid var(--color-border);
   border-radius: 0.5rem;
-  background: #f8fafc;
-  color: #1f2933;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.branch-select--loading .branch-select__state {
+  border-left: 3px solid var(--color-primary);
+}
+
+.branch-select--error .branch-select__message,
+.branch-select__message--error {
+  border-left: 3px solid #b42318;
+  color: #b42318;
+}
+
+.branch-select--empty .branch-select__message {
+  border-left: 3px solid var(--color-muted);
 }
 
 .branch-select__retry {
   align-self: flex-start;
   margin-top: 0.25rem;
   padding: 0.5rem 0.75rem;
-  border: 1px solid #2563eb;
+  border: 1px solid var(--color-primary);
   border-radius: 0.5rem;
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   font: inherit;
   cursor: pointer;
+}
+
+.branch-select__retry:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 @media (max-width: 640px) {

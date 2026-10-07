@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getBranches } from '../services/branchService';
 
 const ERROR_MESSAGE = 'We could not load branches. Please try again.';
@@ -6,55 +6,60 @@ const ERROR_MESSAGE = 'We could not load branches. Please try again.';
 export function useBranches() {
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const activeRef = useRef(true);
+  const [error, setError] = useState(null);
+  const mountedRef = useRef(false);
+  const requestIdRef = useRef(0);
 
   const loadBranches = useCallback(async () => {
+    if (!mountedRef.current) {
+      return;
+    }
+
+    const requestId = ++requestIdRef.current;
     setLoading(true);
-    setError('');
+    setError(null);
 
     try {
       const nextBranches = await getBranches();
 
-      if (!activeRef.current) {
+      if (!mountedRef.current || requestId !== requestIdRef.current) {
         return;
       }
 
       setBranches(nextBranches);
-      setError('');
+      setError(null);
     } catch {
-      if (!activeRef.current) {
+      if (!mountedRef.current || requestId !== requestIdRef.current) {
         return;
       }
 
       setBranches([]);
       setError(ERROR_MESSAGE);
     } finally {
-      if (activeRef.current) {
+      if (mountedRef.current && requestId === requestIdRef.current) {
         setLoading(false);
       }
     }
   }, []);
 
   useEffect(() => {
-    activeRef.current = true;
-    loadBranches();
+    mountedRef.current = true;
+    void loadBranches();
 
     return () => {
-      activeRef.current = false;
+      mountedRef.current = false;
+      requestIdRef.current += 1;
     };
   }, [loadBranches]);
 
   const retry = useCallback(() => {
-    loadBranches();
+    void loadBranches();
   }, [loadBranches]);
 
-  return {
-    branches,
-    loading,
-    error,
-    retry,
-  };
+  return useMemo(
+    () => ({ branches, loading, error, retry }),
+    [branches, loading, error, retry],
+  );
 }
 
 export default useBranches;
