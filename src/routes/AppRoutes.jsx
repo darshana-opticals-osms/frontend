@@ -8,6 +8,7 @@ import ProductsPage from '../pages/ProductsPage';
 import ProductDetailPage from '../pages/ProductDetailPage';
 import ProfilePage from '../pages/ProfilePage';
 import ProtectedRoute from './ProtectedRoute';
+import { CUSTOMER } from '../config/roles';
 
 function AppRoutes() {
   return (
@@ -20,7 +21,7 @@ function AppRoutes() {
         <Route path="/products" element={<ProductsPage />} />
         <Route path="/products/:id" element={<ProductDetailPage />} />
 
-        <Route element={<ProtectedRoute />}>
+        <Route element={<ProtectedRoute allowedRoles={[CUSTOMER]} />}>
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
 

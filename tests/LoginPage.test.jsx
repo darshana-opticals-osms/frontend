@@ -4,6 +4,11 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import AuthProvider from '../src/context/AuthProvider';
 import LoginPage from '../src/pages/LoginPage';
 import authService from '../src/services/auth/authService';
+import { getPostLoginRoute } from '../src/routes/roleNavigation';
+
+vi.mock('../src/routes/roleNavigation', () => ({
+  getPostLoginRoute: vi.fn(() => '/'),
+}));
 
 vi.mock('../src/services/auth/authService', () => ({
   default: {
@@ -22,6 +27,7 @@ function renderLoginPage() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/" element={<p>Home page test marker</p>} />
+          <Route path="/clinical" element={<p>Clinical test marker</p>} />
         </Routes>
       </AuthProvider>
     </MemoryRouter>,
@@ -40,6 +46,8 @@ describe('LoginPage', () => {
     authService.isAuthenticated.mockReturnValue(false);
 
     authService.login.mockReset();
+    getPostLoginRoute.mockReset();
+    getPostLoginRoute.mockReturnValue('/');
 
     authService.login.mockResolvedValue({
       id: 'customer-1',
@@ -149,6 +157,29 @@ describe('LoginPage', () => {
     expect(
       await screen.findByText(/home page test marker/i),
     ).toBeInTheDocument();
+  });
+
+  it('routes by the backend-returned role, not a misleading email address', async () => {
+    authService.login.mockResolvedValueOnce({
+      id: 'staff-1',
+      name: 'Dr. Jane Doe',
+      email: 'customer@example.com',
+      role: 'OPTOMETRIST',
+    });
+    getPostLoginRoute.mockImplementation((role) =>
+      role === 'OPTOMETRIST' ? '/clinical' : '/',
+    );
+
+    const user = userEvent.setup();
+
+    renderLoginPage();
+    await fillValidLoginForm(user);
+    await user.click(screen.getByRole('button', { name: /sign in/i }));
+
+    expect(
+      await screen.findByText(/clinical test marker/i),
+    ).toBeInTheDocument();
+    expect(getPostLoginRoute).toHaveBeenCalledWith('OPTOMETRIST');
   });
 
   it('shows a backend login error and does not establish a session', async () => {

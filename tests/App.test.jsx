@@ -1,9 +1,43 @@
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import App from '../src/App';
 import AuthProvider from '../src/context/AuthProvider';
+import ProtectedRoute from '../src/routes/ProtectedRoute';
+import authService from '../src/services/auth/authService';
+import profileService from '../src/services/profile/profileService';
+import { OPTOMETRIST } from '../src/config/roles';
 
-function renderAppAt(initialRoute) {
+vi.mock('../src/services/auth/authService', () => ({
+  default: {
+    getCurrentUser: vi.fn(() => null),
+    isAuthenticated: vi.fn(() => false),
+    register: vi.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
+    updateCurrentUser: vi.fn(),
+  },
+}));
+
+vi.mock('../src/services/profile/profileService', () => ({
+  default: {
+    getProfile: vi.fn(async () => ({
+      name: 'Jane Doe',
+      email: 'jane@example.com',
+      address: '',
+      phone: '',
+    })),
+    updateProfile: vi.fn(),
+  },
+}));
+
+function setAuthenticatedUser(user) {
+  authService.getCurrentUser.mockReturnValue(user);
+  authService.isAuthenticated.mockReturnValue(Boolean(user));
+}
+
+function renderAppAt(initialRoute, user = null) {
+  setAuthenticatedUser(user);
+
   return render(
     <MemoryRouter initialEntries={[initialRoute]}>
       <AuthProvider>
@@ -12,6 +46,37 @@ function renderAppAt(initialRoute) {
     </MemoryRouter>,
   );
 }
+
+function renderTestProtectedRoute(initialRoute, user, allowedRoles) {
+  setAuthenticatedUser(user);
+
+  return render(
+    <MemoryRouter initialEntries={[initialRoute]}>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<h1>Safe home</h1>} />
+          <Route path="/login" element={<h1>Login destination</h1>} />
+          <Route
+            element={
+              <ProtectedRoute
+                {...(allowedRoles !== undefined ? { allowedRoles } : {})}
+              />
+            }
+          >
+            <Route path="/clinical" element={<h1>Clinical test route</h1>} />
+            <Route path="/protected" element={<h1>Protected test route</h1>} />
+          </Route>
+        </Routes>
+      </AuthProvider>
+    </MemoryRouter>,
+  );
+}
+
+beforeEach(() => {
+  authService.getCurrentUser.mockReturnValue(null);
+  authService.isAuthenticated.mockReturnValue(false);
+  profileService.getProfile.mockClear();
+});
 
 describe('Application shell', () => {
   it('renders the navbar, main content area, and footer', () => {
@@ -54,5 +119,78 @@ describe('Routing', () => {
     expect(
       screen.getByRole('heading', { name: /welcome back/i }),
     ).toBeInTheDocument();
+  });
+
+  it('allows Customer to access the profile page', async () => {
+    renderAppAt('/profile', {
+      id: 'customer-1',
+      email: 'jane@example.com',
+      role: 'CUSTOMER',
+    });
+
+    expect(
+      await screen.findByRole('heading', { name: /personal information/i }),
+    ).toBeInTheDocument();
+    expect(profileService.getProfile).toHaveBeenCalledTimes(1);
+  });
+
+  it('denies staff profile access before the profile API executes', async () => {
+    renderAppAt('/profile', {
+      id: 'optometrist-1',
+      email: 'doctor@example.com',
+      role: 'OPTOMETRIST',
+    });
+
+    expect(
+      await screen.findByRole('heading', { name: /darshana opticals/i }),
+    ).toBeInTheDocument();
+    expect(profileService.getProfile).not.toHaveBeenCalled();
+  });
+
+  it('allows Optometrist through an authenticated test-only Clinical route', () => {
+    renderTestProtectedRoute(
+      '/clinical',
+      { id: 'optometrist-1', role: OPTOMETRIST },
+      [OPTOMETRIST],
+    );
+
+    expect(
+      screen.getByRole('heading', { name: /clinical test route/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('rejects Customer from the test-only Optometrist route', () => {
+    renderTestProtectedRoute(
+      '/clinical',
+      { id: 'customer-1', role: 'CUSTOMER' },
+      [OPTOMETRIST],
+    );
+
+    expect(
+      screen.getByRole('heading', { name: /safe home/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: /clinical test route/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('preserves authentication-only access through AuthProvider', () => {
+    renderTestProtectedRoute('/protected', {
+      id: 'manager-1',
+      role: 'MANAGEMENT',
+    });
+
+    expect(
+      screen.getByRole('heading', { name: /protected test route/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('redirects an unauthenticated profile request to Login', () => {
+    renderAppAt('/profile');
+
+    expect(
+      screen.getByRole('heading', { name: /welcome back/i }),
+    ).toBeInTheDocument();
+    expect(profileService.getProfile).not.toHaveBeenCalled();
   });
 });

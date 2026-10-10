@@ -18,6 +18,7 @@ import {
   isValidEmail,
   validationMessages,
 } from '../utils/validators';
+import { getPostLoginRoute } from '../routes/roleNavigation';
 import '../styles/authShell.css';
 import './LoginPage.css';
 
@@ -101,11 +102,11 @@ function LoginPage() {
     }
 
     try {
-      await login({
+      const authenticatedUser = await login({
         email: values.email,
         password: values.password,
       });
-      navigate('/', { replace: true });
+      navigate(getPostLoginRoute(authenticatedUser?.role), { replace: true });
     } catch (error) {
       setApiError(error.message || 'Unable to sign in. Please try again.');
     }

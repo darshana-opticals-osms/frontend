@@ -2,6 +2,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import logo from '../../assets/darshana-logo.jpg';
 import useAuth from '../../hooks/useAuth';
+import { CUSTOMER } from '../../config/roles';
 import SearchBar from '../products/SearchBar';
 import './Navbar.css';
 
@@ -10,7 +11,7 @@ const categoryLinks = ['Men', 'Women', 'Kids', 'Sunglasses'];
 function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
 
   const currentParams = new URLSearchParams(location.search);
   const currentSearch = location.pathname.startsWith('/products')
@@ -93,9 +94,11 @@ function Navbar() {
         <ul className="navbar__account-links">
           {isAuthenticated ? (
             <>
-              <li>
-                <Link to="/profile">Profile</Link>
-              </li>
+              {user?.role === CUSTOMER ? (
+                <li>
+                  <Link to="/profile">Profile</Link>
+                </li>
+              ) : null}
 
               <li>
                 <button

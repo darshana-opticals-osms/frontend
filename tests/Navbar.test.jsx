@@ -3,6 +3,15 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import Navbar from '../src/components/common/Navbar';
 import useAuth from '../src/hooks/useAuth';
+import {
+  BRANCH_MANAGER,
+  CUSTOMER,
+  INVENTORY_MANAGER,
+  MANAGEMENT,
+  OPTOMETRIST,
+  SALES_ASSISTANT_CASHIER,
+  SYSTEM_ADMIN,
+} from '../src/config/roles';
 
 vi.mock('../src/hooks/useAuth');
 
@@ -53,6 +62,7 @@ describe('Navbar authentication controls', () => {
   it('shows profile and logout controls when authenticated', () => {
     useAuth.mockReturnValue({
       isAuthenticated: true,
+      user: { role: CUSTOMER },
       logout: vi.fn(),
     });
 
@@ -70,9 +80,34 @@ describe('Navbar authentication controls', () => {
     ).not.toBeInTheDocument();
   });
 
+  it.each([
+    SYSTEM_ADMIN,
+    INVENTORY_MANAGER,
+    BRANCH_MANAGER,
+    OPTOMETRIST,
+    MANAGEMENT,
+    SALES_ASSISTANT_CASHIER,
+  ])('hides Profile but keeps Logout for %s', (role) => {
+    useAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { role },
+      logout: vi.fn(),
+    });
+
+    renderNavbar();
+
+    expect(
+      screen.queryByRole('link', { name: /^profile$/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /log out/i }),
+    ).toBeInTheDocument();
+  });
+
   it('opens the customer profile route from the authenticated navbar', async () => {
     useAuth.mockReturnValue({
       isAuthenticated: true,
+      user: { role: CUSTOMER },
       logout: vi.fn(),
     });
 
@@ -94,6 +129,7 @@ describe('Navbar authentication controls', () => {
 
     useAuth.mockReturnValue({
       isAuthenticated: true,
+      user: { role: CUSTOMER },
       logout,
     });
 
@@ -162,5 +198,38 @@ describe('Navbar authentication controls', () => {
         name: /products destination/i,
       }),
     ).toBeInTheDocument();
+  });
+
+  it('preserves public home, category, and search navigation', () => {
+    useAuth.mockReturnValue({
+      isAuthenticated: false,
+      user: null,
+      logout: vi.fn(),
+    });
+
+    renderNavbar();
+
+    expect(
+      screen.getByRole('link', { name: /darshana opticals home/i }),
+    ).toHaveAttribute('href', '/');
+    expect(
+      screen.getByRole('searchbox', { name: /search frames/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Men' })).toHaveAttribute(
+      'href',
+      '/products?category=Men',
+    );
+    expect(screen.getByRole('link', { name: 'Women' })).toHaveAttribute(
+      'href',
+      '/products?category=Women',
+    );
+    expect(screen.getByRole('link', { name: 'Kids' })).toHaveAttribute(
+      'href',
+      '/products?category=Kids',
+    );
+    expect(screen.getByRole('link', { name: 'Sunglasses' })).toHaveAttribute(
+      'href',
+      '/products?category=Sunglasses',
+    );
   });
 });
