@@ -1,0 +1,21 @@
+export const CUSTOMER = 'CUSTOMER';
+export const SYSTEM_ADMIN = 'SYSTEM_ADMIN';
+export const INVENTORY_MANAGER = 'INVENTORY_MANAGER';
+export const BRANCH_MANAGER = 'BRANCH_MANAGER';
+export const OPTOMETRIST = 'OPTOMETRIST';
+export const MANAGEMENT = 'MANAGEMENT';
+export const SALES_ASSISTANT_CASHIER = 'SALES_ASSISTANT_CASHIER';
+
+const CANONICAL_ROLES = new Set([
+  CUSTOMER,
+  SYSTEM_ADMIN,
+  INVENTORY_MANAGER,
+  BRANCH_MANAGER,
+  OPTOMETRIST,
+  MANAGEMENT,
+  SALES_ASSISTANT_CASHIER,
+]);
+
+export function isCanonicalRole(role) {
+  return typeof role === 'string' && CANONICAL_ROLES.has(role);
+}
