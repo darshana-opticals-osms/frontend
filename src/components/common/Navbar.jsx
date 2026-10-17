@@ -197,6 +197,12 @@ function Navbar() {
                 </li>
               )}
 
+              {user?.role === BRANCH_MANAGER ? (
+                <li>
+                  <Link to="/staff/loyalty">Loyalty Monitoring</Link>
+                </li>
+              ) : null}
+
               {canViewStaffAppointments ? (
                 <li>
                   <Link to="/staff/appointments">Appointments</Link>
