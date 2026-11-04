@@ -338,14 +338,6 @@ function CheckoutEntryPage() {
             </ul>
           </div>
 
-          <div className="checkout-review__notice">
-            <strong>Before you place the order</strong>
-            <p>
-              The values shown on this page are provisional. The backend will
-              validate current prices and stock before creating your order.
-            </p>
-          </div>
-
           <div className="checkout-review__actions">
             <Link to="/cart" className="checkout-back">
               ← Back to Cart
@@ -401,11 +393,6 @@ function CheckoutEntryPage() {
             <span>Estimated Total</span>
             <strong>{formatCurrency(cartTotal)}</strong>
           </div>
-
-          <p className="checkout-summary__note">
-            The confirmed total may change if the backend detects an updated
-            product price.
-          </p>
         </aside>
       </div>
     </section>
