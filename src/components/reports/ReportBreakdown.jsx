@@ -111,7 +111,7 @@ export default function ReportBreakdown({
         <p>
           {kind === 'inventory'
             ? 'Current snapshot only. This is not historical inventory movement.'
-            : 'Values use the selected reporting period and backend grouping.'}
+            : 'Based on your selected filters..'}
         </p>
       </div>
       {rows.length === 0 ? (
@@ -124,7 +124,7 @@ export default function ReportBreakdown({
           tabIndex={0}
         >
           <table>
-            <caption>Backend-provided breakdown values</caption>
+            <caption>Report breakdown</caption>
             <thead>
               <tr>
                 <th scope="col">

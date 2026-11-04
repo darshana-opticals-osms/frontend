@@ -104,7 +104,7 @@ function InventoryReorderAlerts({ branchId, refreshCount, onUnauthorized }) {
         <>
           <div className="inventory-page__table-wrap">
             <table className="inventory-page__table">
-              <caption>Active backend reorder alerts</caption>
+              <caption>Active reorder alerts</caption>
               <thead>
                 <tr>
                   <th scope="col">Item</th>

@@ -583,8 +583,8 @@ function PaymentEntryPage() {
               {uncertainInitiation ? (
                 <div className="payment-recovery">
                   <p>
-                    Before trying again, check the backend payment status to
-                    avoid starting an unnecessary duplicate attempt.
+                    Check your payment status before trying again to avoid
+                    duplicate payments.
                   </p>
 
                   <button

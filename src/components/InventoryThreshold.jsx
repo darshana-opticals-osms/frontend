@@ -107,10 +107,7 @@ function InventoryThreshold({ onUpdated, onUnauthorized }) {
       aria-labelledby="inventory-threshold-heading"
     >
       <h2 id="inventory-threshold-heading">Global Reorder Threshold</h2>
-      <p>
-        Changes apply to all branches. The backend updates affected reorder
-        alerts.
-      </p>
+      <p>This threshold applies to all branches.</p>
 
       {loading ? (
         <p role="status">Loading reorder threshold...</p>

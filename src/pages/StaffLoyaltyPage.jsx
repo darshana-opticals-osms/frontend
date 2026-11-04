@@ -174,7 +174,6 @@ export default function StaffLoyaltyPage() {
     <section className="staff-loyalty-page">
       <header className="staff-loyalty-page__heading">
         <h1>Loyalty Monitoring</h1>
-        <p>Review backend-confirmed customer loyalty activity.</p>
       </header>
 
       <section
@@ -184,9 +183,6 @@ export default function StaffLoyaltyPage() {
         <header className="staff-loyalty-card__header">
           <div>
             <h2 id="loyalty-monitoring-title">Loyalty Transactions</h2>
-            <p>
-              Read-only loyalty history from the authoritative backend service.
-            </p>
           </div>
 
           <button

@@ -147,10 +147,6 @@ describe('StaffOrderDetailsPage', () => {
         name: 'Order Tracking History',
       }),
     ).toBeTruthy();
-
-    expect(
-      screen.getByText('Confirmed tracking information from the backend'),
-    ).toBeTruthy();
   });
 
   it('shows access denied on 403', async () => {

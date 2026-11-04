@@ -222,10 +222,7 @@ export default function AdminStaffEditor({
       <div className="staff-editor__heading">
         <div>
           <h3>Edit staff member</h3>
-          <p>
-            Update an existing staff account. Historical records are preserved
-            by the backend.
-          </p>
+          <p>Historical staff records will be preserved.</p>
         </div>
         <button type="button" onClick={onClose} disabled={Boolean(saving)}>
           Close editor
