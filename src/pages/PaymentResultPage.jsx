@@ -178,7 +178,7 @@ function PaymentResultPage() {
     stateClass = 'payment-result-card--warning';
   } else if (status === 'refunded') {
     heading = 'Payment refunded';
-    description = 'The backend reports that this payment has been refunded.';
+    description = 'This payment has been refunded.';
     stateClass = 'payment-result-card--warning';
   } else if (status === 'processing') {
     heading = 'Payment processing';

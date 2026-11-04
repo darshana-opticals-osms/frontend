@@ -71,7 +71,6 @@ export default function StaffOrdersPage() {
         <div className="orders-card-header">
           <div>
             <h2 id="staff-orders-title">Customer Orders</h2>
-            <p>Order information from the backend</p>
           </div>
 
           <button type="button" onClick={() => loadOrders()} disabled={loading}>

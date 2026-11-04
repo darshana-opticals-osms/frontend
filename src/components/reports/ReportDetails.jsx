@@ -184,10 +184,6 @@ export default function ReportDetails({ kind, applied, admin, scopeId }) {
       <div className="report-details__header">
         <div>
           <h2>{sales ? 'Sales order details' : 'Inventory item details'}</h2>
-          <p>
-            Backend-provided records and pagination. No browser-calculated
-            reporting totals.
-          </p>
         </div>
         <div className="report-details__exports">
           <button
