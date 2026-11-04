@@ -431,12 +431,6 @@ function PaymentEntryPage() {
                 </div>
               </dl>
 
-              <div className="payment-message payment-message--info">
-                Payment is not complete yet. Darshana Opticals will confirm the
-                final result only after the backend verifies PayHere&apos;s
-                payment notification.
-              </div>
-
               <form
                 action={preparedPayment.gateway.checkoutUrl}
                 method="post"
@@ -667,11 +661,6 @@ function PaymentEntryPage() {
                 ? formatCurrency(orderAmount)
                 : 'Unavailable'}
             </strong>
-          </div>
-
-          <div className="payment-summary__secure">
-            <span aria-hidden="true">🔒</span>
-            <p>Card information is entered securely on PayHere, not in OSMS.</p>
           </div>
         </aside>
       </div>
